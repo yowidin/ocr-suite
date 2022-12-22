@@ -3,8 +3,11 @@
 //
 
 #include <ocs/bmp.h>
+#include <cstdio>
 
 #include <array>
+
+using namespace std;
 
 namespace {
 

@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.6)
 project(ocr_suite VERSION 0.0.1 LANGUAGES CXX)
 
-find_package(ffmpeg REQUIRED CONFIG)
-find_package(tesseract REQUIRED CONFIG)
-find_package(sqlite3 REQUIRED CONFIG)
-find_package(lyra CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(indicators CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(NO_OUTPUT_DIRS)
+
+# find_package(ffmpeg REQUIRED CONFIG)
+# find_package(tesseract REQUIRED CONFIG)
+# find_package(sqlite3 REQUIRED CONFIG)
+# find_package(lyra CONFIG REQUIRED)
+# find_package(spdlog CONFIG REQUIRED)
+# find_package(indicators CONFIG REQUIRED)
+# find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 
 
 add_executable(ocr_suite
@@ -21,10 +24,10 @@ add_executable(ocr_suite
     src/speed_meter.cpp
     src/options.cpp)
 
-target_link_libraries(ocr_suite PRIVATE
-    ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil ffmpeg::swscale
-    tesseract::libtesseract
-    SQLite::SQLite3 bfg::lyra spdlog::spdlog Boost::filesystem indicators::indicators
+target_link_libraries(ocr_suite PRIVATE ${CONAN_LIBS}
+    # ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil ffmpeg::swscale
+    # tesseract::libtesseract
+    # SQLite::SQLite3 bfg::lyra spdlog::spdlog Boost::filesystem indicators::indicators
     )
 
 target_include_directories(ocr_suite
@@ -39,7 +42,9 @@ set_target_properties(ocr_suite PROPERTIES
     CXX_EXTENSIONS NO
     )
 
-add_subdirectory(test)
+if (BUILD_TESTS)
+  add_subdirectory(test)
+endif ()
 
 option(DOWNLOAD_TESS_DATA "Download tesseract data" OFF)
 if (DOWNLOAD_TESS_DATA)

@@ -12,9 +12,16 @@
       "description": "Default Build",
       "generator": "Ninja",
       "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "windows",
+      "inherits": "default",
+      "generator": "Visual Studio 17 2022",
+      "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/${presetName}/conan_toolchain.cmake"
+        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
       }
     },
     {
@@ -22,8 +29,7 @@
       "inherits": "default",
       "displayName": "debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "BUILD_TESTS": true
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -33,6 +39,17 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+
+    {
+      "name": "debug-win",
+      "inherits": ["windows", "debug"],
+      "displayName": "debug-win"
+    },
+    {
+      "name": "release-win",
+      "inherits": ["windows", "release"],
+      "displayName": "release-win"
     }
   ],
   "buildPresets": [
@@ -43,6 +60,14 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "debug-win",
+      "configurePreset": "debug-win"
+    },
+    {
+      "name": "release-win",
+      "configurePreset": "release-win"
     }
   ]
 }
