@@ -51,6 +51,8 @@ public:
    //! Shutdown the queue and notify all waiting threads.
    void shutdown();
 
+   std::size_t get_remaining_consumer_values() const;
+
 private:
    //! Mutex protecting the producer queue.
    std::mutex producer_mutex_{};
@@ -68,7 +70,7 @@ private:
    value_list_t producer_values_{};
 
    //! Mutex protecting the consumer queue.
-   std::mutex consumer_mutex_{};
+   mutable std::mutex consumer_mutex_{};
    std::condition_variable consumer_cv_{};
 
    //! Buffers, available for reading data from them (consumers).
@@ -157,6 +159,12 @@ void value_queue<T>::shutdown() {
    }
    consumer_lock.unlock();
    consumer_cv_.notify_all();
+}
+
+template <typename T>
+std::size_t value_queue<T>::get_remaining_consumer_values() const {
+   std::unique_lock lock{consumer_mutex_};
+   return consumer_values_.size();
 }
 
 } // namespace ocs

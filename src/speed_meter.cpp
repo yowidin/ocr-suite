@@ -44,6 +44,7 @@ void speed_meter::check_progress() {
    auto elapsed_ms = static_cast<double>(duration_cast<milliseconds>(elapsed).count());
 
    auto frames_seeked = last_frame_number_ - last_print_frame_number_;
+   frames_seeked = std::max<std::int64_t>(frames_seeked, 0);
 
    progress report{};
    report.recognized_frames_per_second = (static_cast<double>(frames_processed_) / elapsed_ms) * 1000.0;

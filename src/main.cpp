@@ -12,7 +12,6 @@
 #include <boost/asio.hpp>
 #include <indicators/progress_spinner.hpp>
 
-
 int main(int argc, const char **argv) {
    auto pres = ocs::options::parse(argc, argv);
    if (!pres) {
@@ -30,9 +29,11 @@ int main(int argc, const char **argv) {
    const auto frame_filter = static_cast<ocs::video::frame_filter>(options.frame_filter);
    ocs::video video_file{options.video_file, queue, starting_frame_number, frame_filter};
 
+   std::string postfix = "Processing ...";
+
    using namespace indicators;
    indicators::ProgressSpinner spinner{
-       option::PostfixText{"Processing ..."},
+       option::PostfixText{postfix},
        option::ForegroundColor{Color::yellow},
        option::SpinnerStates{std::vector<std::string>{"\\", "|", "/", "-"}},
        option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
@@ -60,10 +61,6 @@ int main(int argc, const char **argv) {
    bool stopping = false;
 
    auto progress_callback = [&](const auto &report) {
-      if (stopping) {
-         return;
-      }
-
       std::string time;
       if (max_frames.has_value()) {
          time = fmt::format("[{} / {}]", frame_number_to_time_string(report.last_frame_number),
@@ -72,8 +69,11 @@ int main(int argc, const char **argv) {
          time = fmt::format("[{}]", frame_number_to_time_string(report.last_frame_number));
       }
 
-      std::string text = fmt::format("Processing ... {:05.2f} OCR/s, {:05.2f} seek/s {}",
-                                     report.recognized_frames_per_second, report.total_frames_per_second, time);
+      const auto left_in_queue = queue->get_remaining_consumer_values();
+
+      std::string text =
+          fmt::format("{} {:05.2f} OCR/s, {:05.2f} seek/s, {} in queue {}", postfix,
+                      report.recognized_frames_per_second, report.total_frames_per_second, left_in_queue, time);
       spinner.set_option(option::PostfixText{text});
    };
 
@@ -89,7 +89,8 @@ int main(int argc, const char **argv) {
          SPDLOG_ERROR("Signal error: {}", ec.message());
       }
 
-      spinner.set_option(option::PostfixText{"Stopping ..."});
+      postfix = "Stopping ...";
+      spinner.set_option(option::PostfixText{postfix});
       final_text = "Interrupted!";
       stopping = true;
       queue->shutdown();
@@ -128,6 +129,13 @@ int main(int argc, const char **argv) {
       }
    };
 
+   auto progress_message = [&](auto msg) {
+     spinner.set_option(option::PostfixText{msg});
+     spinner.print_progress();
+     std::cout.flush();
+   };
+
+   progress_message(fmt::format("Starting {} consumer threads...", options.ocr_threads));
    std::vector<std::thread> consumers;
    for (auto i = 0; i < options.ocr_threads; ++i) {
       consumers.emplace_back(consumer_func);
@@ -135,6 +143,7 @@ int main(int argc, const char **argv) {
 
    bool done = false;
    try {
+      progress_message("Starting decoder...");
       spinner.print_progress();
       video_file.start();
       done = true;
@@ -170,8 +179,7 @@ int main(int argc, const char **argv) {
 
    spinner.set_option(option::ShowSpinner{false});
    spinner.set_option(option::ShowPercentage{false});
-   spinner.set_option(option::PostfixText{final_text});
-   spinner.print_progress();
+   progress_message(final_text);
 
    return return_code;
 }
