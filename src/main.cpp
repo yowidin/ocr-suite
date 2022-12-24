@@ -102,9 +102,9 @@ int main(int argc, const char **argv) {
    auto consumer_func = [&]() {
       try {
          auto ocr_callback = [&](const ocs::ocr::ocr_result &result) {
-            db.store(result);
             meter.add_ocr_frame(result.frame_number);
             spinner.set_progress(result.frame_number);
+            db.store(result);
          };
 
          auto filter_callback = [&](std::int64_t frame_number) {
@@ -130,9 +130,9 @@ int main(int argc, const char **argv) {
    };
 
    auto progress_message = [&](auto msg) {
-     spinner.set_option(option::PostfixText{msg});
-     spinner.print_progress();
-     std::cout.flush();
+      spinner.set_option(option::PostfixText{msg});
+      spinner.print_progress();
+      std::cout.flush();
    };
 
    progress_message(fmt::format("Starting {} consumer threads...", options.ocr_threads));

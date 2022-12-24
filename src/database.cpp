@@ -14,6 +14,7 @@ using db_t = ocs::db::database;
 // implemented in standalone modules
 #define OCS_IDL_INCLUDE
 #include "db/updates/v0.inl"
+#include "db/updates/v1.inl"
 
 // Note: should always be last
 #include "db/updates/update.inl"
@@ -27,6 +28,10 @@ database::database(std::string db_path)
 }
 
 void database::store(const ocr::ocr_result &result) {
+   if (result.entries.empty()) {
+      return;
+   }
+
    std::lock_guard lock{database_mutex_};
 
    if (is_frame_processed(result.frame_number)) {

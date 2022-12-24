@@ -5,9 +5,32 @@
 #include <ocs/ocr.h>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <functional>
+
 #include <tesseract/baseapi.h>
 
 using namespace ocs;
+
+namespace {
+
+// trim from start (in place)
+inline void ltrim(std::string &s) {
+   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+}
+
+// trim from end (in place)
+inline void rtrim(std::string &s) {
+   s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+}
+
+// trim from both ends (in place)
+inline void trim(std::string &s) {
+   rtrim(s);
+   ltrim(s);
+}
+
+} // namespace
 
 ocr::ocr(const std::string &tess_data_path, const std::string &languages, ocr_result_cb_t cb)
    : cb_{std::move(cb)} {
@@ -74,6 +97,8 @@ void ocr::do_ocr(const frame_t &frame) {
       auto text = it->GetUTF8Text(tesseract::RIL_WORD);
       entry.text = std::string(text);
       delete[] text;
+
+      trim(entry.text);
 
       if (entry.text.size() < min_letters_threshold_) {
          continue;
