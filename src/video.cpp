@@ -2,6 +2,7 @@
 // Created by Dennis Sitelew on 18.12.22.
 //
 
+#include <ocs/util.h>
 #include <ocs/video.h>
 
 #include <spdlog/spdlog.h>
@@ -12,10 +13,13 @@ extern "C" {
 #include <libavutil/avassert.h>
 #include <libavutil/hwcontext.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/log.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 }
+
+#include <cstdarg>
 
 namespace ffmpeg {
 
@@ -99,6 +103,11 @@ public:
       return *this;
    }
 
+   void reset() {
+      trait::deallocate(ptr_);
+      ptr_ = trait::allocate();
+   }
+
 public:
    T *get() { return ptr_; }
    T *operator->() { return ptr_; }
@@ -149,6 +158,57 @@ AVHWDeviceType get_default_hw_decoder_type() {
    return result;
 }
 
+// Convert the FFMPEG logging level to the spdlog logging level
+spdlog::level::level_enum ffmpeg_level_to_spdlog_level(int level) {
+   switch (level) {
+      case AV_LOG_QUIET:
+         return spdlog::level::off;
+      case AV_LOG_PANIC:
+      case AV_LOG_FATAL:
+         return spdlog::level::critical;
+      case AV_LOG_ERROR:
+         return spdlog::level::err;
+      case AV_LOG_WARNING:
+         return spdlog::level::warn;
+      case AV_LOG_INFO:
+         return spdlog::level::info;
+      case AV_LOG_VERBOSE:
+      case AV_LOG_DEBUG:
+         return spdlog::level::debug;
+      case AV_LOG_TRACE:
+         return spdlog::level::trace;
+      default:
+         return spdlog::level::off;
+   }
+}
+
+void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
+   const auto selected_level = av_log_get_level();
+   if (level > selected_level) {
+      return;
+   }
+
+   const AVClass *avc = avcl ? *(AVClass **)avcl : nullptr;
+   const spdlog::level::level_enum lvl = ffmpeg_level_to_spdlog_level(level);
+
+   std::va_list args_copy;
+   va_copy(args_copy, vl);
+
+   const auto required = std::vsnprintf(nullptr, 0, fmt, args_copy) + 1;
+   va_end(args_copy);
+
+   std::string msg(required, ' ');
+   std::vsnprintf(msg.data(), msg.size(), fmt, vl);
+   msg.resize(msg.size() - 1); // Remove the trailing null character
+   ocs::trim(msg);
+
+   if (avc) {
+      spdlog::log(lvl, "[{}] {}", avc->class_name, msg);
+   } else {
+      spdlog::log(lvl, "{}", msg);
+   }
+}
+
 } // namespace ffmpeg
 
 using namespace ocs;
@@ -157,10 +217,13 @@ using namespace ocs;
 //! acceleration.
 class video::ffmpeg_video_stream {
 public:
-   ffmpeg_video_stream(std::string filename, std::int64_t starting_frame, video::frame_filter filter, video &video)
-      : filename_(std::move(filename))
-      , filter_(filter)
+   ffmpeg_video_stream(const options &opts, std::int64_t starting_frame, video &video)
+      : filename_(opts.video_file)
+      , filter_(static_cast<ocs::video::frame_filter>(opts.frame_filter))
       , video_{&video} {
+      av_log_set_level(AV_LOG_ERROR);
+      av_log_set_callback(ffmpeg::log_callback);
+
       /* open the input file */
       if (avformat_open_input(input_ctx_, filename_.c_str(), nullptr, nullptr) != 0) {
          throw std::runtime_error("Failed to open input file: " + filename_);
@@ -178,16 +241,25 @@ public:
       }
       video_stream_idx_ = ret;
 
-      hw_device_type_ = ffmpeg::get_default_hw_decoder_type();
-      hw_pix_fmt_ = find_pixel_format_for_decoder(decoder, hw_device_type_);
-
       const AVStream *video_stream = input_ctx_->streams[video_stream_idx_];
       if (avcodec_parameters_to_context(decoder_ctx_, video_stream->codecpar) < 0) {
          throw std::runtime_error("Failed to copy codec parameters to decoder context");
       }
 
-      decoder_ctx_->get_format = ffmpeg_video_stream::get_hw_format;
-      hw_decoder_init();
+      try {
+         hw_device_type_ = ffmpeg::get_default_hw_decoder_type();
+         hw_pix_fmt_ = find_pixel_format_for_decoder(decoder, hw_device_type_);
+         decoder_ctx_->get_format = ffmpeg_video_stream::get_hw_format;
+         hw_decoder_init();
+      } catch (const std::runtime_error &ex) {
+         SPDLOG_ERROR("Failed to initialize HW decoder: {}", ex.what());
+         SPDLOG_INFO("Falling back to the software decoder");
+         hw_pix_fmt_ = AV_PIX_FMT_NONE;
+         decoder_ctx_.reset();
+         if (avcodec_parameters_to_context(decoder_ctx_, video_stream->codecpar) < 0) {
+            throw;
+         }
+      }
 
       if (avcodec_open2(decoder_ctx_, decoder, nullptr) < 0) {
          throw std::runtime_error("Failed to open codec for stream #" + std::to_string(video_stream_idx_));
@@ -419,11 +491,13 @@ private:
 
    ffmpeg::format_context input_ctx_;
    ffmpeg::codec_context decoder_ctx_;
-   AVBufferRef *hw_device_ctx_{nullptr};
 
    int video_stream_idx_ = -1;
-   AVHWDeviceType hw_device_type_;
+
+   AVBufferRef *hw_device_ctx_{nullptr};
+   AVHWDeviceType hw_device_type_{AV_HWDEVICE_TYPE_NONE};
    static AVPixelFormat hw_pix_fmt_;
+
    ffmpeg::packet packet_;
    SwsContext *sws_context_{nullptr};
 
@@ -437,9 +511,9 @@ AVPixelFormat video::ffmpeg_video_stream::hw_pix_fmt_ = AV_PIX_FMT_NONE;
 ////////////////////////////////////////////////////////////////////////////////
 /// Class: video
 ////////////////////////////////////////////////////////////////////////////////
-video::video(const std::string &filename, queue_ptr_t queue, std::int64_t starting_frame, frame_filter filter)
+video::video(const options &opts, queue_ptr_t queue, std::int64_t starting_frame)
    : queue_{std::move(queue)}
-   , stream_(std::make_unique<ffmpeg_video_stream>(filename, starting_frame, filter, *this)) {
+   , stream_(std::make_unique<ffmpeg_video_stream>(opts, starting_frame, *this)) {
    // Load the video file.
 }
 

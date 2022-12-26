@@ -2,39 +2,39 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
+#include <ocs/bmp.h>
 #include <ocs/ocr.h>
-#include <spdlog/spdlog.h>
+#include <ocs/util.h>
 
-#include <algorithm>
 #include <functional>
 
+#include <spdlog/spdlog.h>
 #include <tesseract/baseapi.h>
+#include <boost/filesystem.hpp>
 
 using namespace ocs;
 
 namespace {
 
-// trim from start (in place)
-inline void ltrim(std::string &s) {
-   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+std::string get_bitmap_directory(const std::string &db_path) {
+   boost::filesystem::path path{db_path};
+   path.remove_filename();
+   path /= "out";
+   return path.string();
 }
 
-// trim from end (in place)
-inline void rtrim(std::string &s) {
-   s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
-}
-
-// trim from both ends (in place)
-inline void trim(std::string &s) {
-   rtrim(s);
-   ltrim(s);
+std::string get_frame_path(const std::string &bitmap_dir, std::int64_t frame_number) {
+   boost::filesystem::path path{bitmap_dir};
+   path /= fmt::format("out-{}.bmp", frame_number);
+   return path.string();
 }
 
 } // namespace
 
-ocr::ocr(const std::string &tess_data_path, const std::string &languages, ocr_result_cb_t cb)
-   : cb_{std::move(cb)} {
-   int res = ocr_api_.Init(tess_data_path.c_str(), languages.c_str(), tesseract::OEM_LSTM_ONLY);
+ocr::ocr(const ocs::options &opts, ocr_result_cb_t cb)
+   : opts_{&opts}
+   , cb_{std::move(cb)} {
+   int res = ocr_api_.Init(opts_->tess_data_path.c_str(), opts_->language.c_str(), tesseract::OEM_LSTM_ONLY);
    if (res) {
       throw std::runtime_error("Could not initialize tesseract");
    }
@@ -48,6 +48,11 @@ ocr::ocr(const std::string &tess_data_path, const std::string &languages, ocr_re
 #endif
 
    ocr_api_.SetVariable("debug_file", null_device);
+
+   bitmap_directory_ = get_bitmap_directory(opts_->database_file);
+   if (opts_->save_bitmaps) {
+      boost::filesystem::create_directories(bitmap_directory_);
+   }
 }
 
 void ocr::start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter) {
@@ -58,12 +63,15 @@ void ocr::start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter) {
       }
 
       auto frame = opt_frame.value();
+
+      if (opts_->save_bitmaps) {
+         const auto file_name = get_frame_path(bitmap_directory_, frame->frame_number);
+         ocs::bmp::save_image(frame->data, frame->width, frame->height, file_name);
+      }
+
       if (filter(frame->frame_number)) {
          do_ocr(frame);
       }
-
-      // auto file_name = std::string("out/out-") + std::to_string(frame->frame_number) + ".bmp";
-      // ocs::bmp::save_image(frame->data, frame->width, frame->height, file_name);
 
       queue->add_producer_value(frame);
    }

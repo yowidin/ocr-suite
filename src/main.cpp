@@ -9,7 +9,8 @@
 #include <thread>
 
 #include <spdlog/spdlog.h>
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/signal_set.hpp>
 #include <indicators/progress_spinner.hpp>
 
 int main(int argc, const char **argv) {
@@ -26,8 +27,7 @@ int main(int argc, const char **argv) {
    /// --- Setup the progress reporters ---
 
    const auto starting_frame_number = db.get_starting_frame_number();
-   const auto frame_filter = static_cast<ocs::video::frame_filter>(options.frame_filter);
-   ocs::video video_file{options.video_file, queue, starting_frame_number, frame_filter};
+   ocs::video video_file{options, queue, starting_frame_number};
 
    std::string postfix = "Processing ...";
 
@@ -116,7 +116,7 @@ int main(int argc, const char **argv) {
             return !processed;
          };
 
-         ocs::ocr ocr{options.tess_data_path, options.language, ocr_callback};
+         ocs::ocr ocr{options, ocr_callback};
          ocr.start(queue, filter_callback);
       } catch (const std::exception &ex) {
          SPDLOG_ERROR("Consumer thread exception: {}", ex.what());

@@ -6,6 +6,7 @@
 #define OCR_SUITE_VIDEO_H
 
 #include <ocs/value_queue.h>
+#include <ocs/options.h>
 
 #include <cstdint>
 #include <memory>
@@ -60,10 +61,7 @@ public:
    using queue_ptr_t = std::shared_ptr<queue_t>;
 
 public:
-   video(const std::string &filename,
-         queue_ptr_t queue,
-         std::int64_t starting_frame = 0,
-         frame_filter filter = frame_filter::I_and_P);
+   video(const options &opts, queue_ptr_t queue, std::int64_t starting_frame = 0);
    ~video();
 
 public:

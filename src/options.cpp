@@ -43,6 +43,8 @@ std::optional<options> options::parse(int argc, const char **argv) {
            "frame types. 3 is default (I+P frames)") |
        lyra::opt(result.video_file, "video_file")["-i"]["--video-file"]("Video file to process").required() |
        lyra::opt(result.database_file, "database_file")["-o"]["--database-file"]("Resulting OCR database").required() |
+       lyra::opt([&](bool) { result.save_bitmaps = true; })["-b"]["--save-bitmaps"](
+           "Save video bitmaps in the out/ subdirectory") |
        lyra::help(show_help);
 
    auto parse_result = cli.parse({argc, argv});

@@ -4,15 +4,6 @@ project(ocr_suite VERSION 0.0.1 LANGUAGES CXX)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(NO_OUTPUT_DIRS)
 
-# find_package(ffmpeg REQUIRED CONFIG)
-# find_package(tesseract REQUIRED CONFIG)
-# find_package(sqlite3 REQUIRED CONFIG)
-# find_package(lyra CONFIG REQUIRED)
-# find_package(spdlog CONFIG REQUIRED)
-# find_package(indicators CONFIG REQUIRED)
-# find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
-
-
 add_executable(ocr_suite
     src/main.cpp
     src/video.cpp
@@ -24,11 +15,7 @@ add_executable(ocr_suite
     src/speed_meter.cpp
     src/options.cpp)
 
-target_link_libraries(ocr_suite PRIVATE ${CONAN_LIBS}
-    # ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil ffmpeg::swscale
-    # tesseract::libtesseract
-    # SQLite::SQLite3 bfg::lyra spdlog::spdlog Boost::filesystem indicators::indicators
-    )
+target_link_libraries(ocr_suite PRIVATE ${CONAN_LIBS})
 
 target_include_directories(ocr_suite
     PUBLIC include

@@ -5,7 +5,9 @@
 #ifndef OCR_SUITE_OCR_H
 #define OCR_SUITE_OCR_H
 
+#include <ocs/options.h>
 #include <ocs/video.h>
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -35,7 +37,7 @@ public:
    using ocr_filter_cb_t = std::function<bool(std::int64_t)>;
 
 public:
-   ocr(const std::string &tess_data_path, const std::string &languages, ocr_result_cb_t cb);
+   ocr(const ocs::options &opts, ocr_result_cb_t cb);
    ocr(const ocr &) = delete;
 
    ocr &operator=(const ocr &) = delete;
@@ -47,6 +49,9 @@ private:
    void do_ocr(const frame_t &frame);
 
 private:
+   const ocs::options *opts_;
+   std::string bitmap_directory_{};
+
    tesseract::TessBaseAPI ocr_api_{};
    ocr_result_cb_t cb_;
    int min_letters_threshold_{3};

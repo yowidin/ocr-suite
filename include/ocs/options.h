@@ -31,6 +31,9 @@ struct options {
 
    //! Video frame filter
    std::uint16_t frame_filter{};
+
+   //! Save bitmaps to disk
+   bool save_bitmaps{false};
 };
 
 } // namespace ocs
