@@ -4,6 +4,8 @@ compile_commands.json
 .venv
 .cache
 
+**/venv
+
 # Common build directories
 **/cmake-build-*/
 **/build
