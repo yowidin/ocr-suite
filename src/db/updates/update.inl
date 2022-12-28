@@ -6,7 +6,7 @@
 #error Internal use only
 #endif
 
-const int ocs::database::CURRENT_DB_VERSION = 2;
+const int ocs::database::CURRENT_DB_VERSION = 3;
 
 void ocs::database::db_update(db_t &db, int from) {
    switch (from) {
@@ -15,6 +15,9 @@ void ocs::database::db_update(db_t &db, int from) {
 
       case 1:
          return update_v1(db);
+
+      case 2:
+         return update_v2(db);
 
       default:
          throw std::runtime_error("Unknown database version: " + std::to_string(from));

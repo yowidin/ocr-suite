@@ -15,6 +15,7 @@ using db_t = ocs::db::database;
 #define OCS_IDL_INCLUDE
 #include "db/updates/v0.inl"
 #include "db/updates/v1.inl"
+#include "db/updates/v2.inl"
 
 // Note: should always be last
 #include "db/updates/update.inl"
@@ -28,6 +29,7 @@ database::database(std::string db_path)
 }
 
 void database::store(const ocr::ocr_result &result) {
+   store_last_frame_number(result.frame_number);
    if (result.entries.empty()) {
       return;
    }
@@ -72,11 +74,7 @@ std::int64_t database::get_starting_frame_number() const {
    stmt->reset();
    stmt->evaluate();
 
-   if (stmt->is_null(0)) {
-      return 0;
-   } else {
-      return stmt->get_int64(0);
-   }
+   return stmt->get_int64(0) + 1;
 }
 
 bool database::is_frame_processed(std::int64_t frame_num) const {
@@ -90,10 +88,27 @@ bool database::is_frame_processed(std::int64_t frame_num) const {
    return stmt->get_int(0) != 0;
 }
 
+void database::store_last_frame_number(std::int64_t frame_num) const {
+   std::lock_guard lock{database_mutex_};
+
+   static std::int64_t max_frame_number = -1;
+   if (frame_num <= max_frame_number) {
+      return;
+   }
+
+   auto &stmt = store_last_frame_number_;
+
+   stmt->reset();
+   stmt->bind("pnum", frame_num);
+   stmt->evaluate();
+
+   max_frame_number = frame_num;
+}
+
 void database::prepare_statements() {
    // clang-format off
    get_starting_frame_number_ = std::make_unique<db::statement>("get_starting_frame_number");
-   get_starting_frame_number_->prepare(db_, R"sql(SELECT MAX(frame_num)+1 FROM ocr_entries;)sql", true);
+   get_starting_frame_number_->prepare(db_, R"sql(SELECT last_processed_frame FROM metadata;)sql", true);
 
    add_text_entry_ = std::make_unique<db::statement>("add_text_entry");
    add_text_entry_->prepare(db_,
@@ -104,6 +119,10 @@ void database::prepare_statements() {
    is_frame_number_present_ = std::make_unique<db::statement>("is_frame_number_present");
    is_frame_number_present_->prepare(db_,
    R"sql(SELECT COUNT(*) FROM ocr_entries WHERE frame_num = :pnum;)sql", true);
+
+   store_last_frame_number_ = std::make_unique<db::statement>("store_last_frame_number");
+   store_last_frame_number_->prepare(db_,
+   R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql", true);
 
    // clang-format on
 }

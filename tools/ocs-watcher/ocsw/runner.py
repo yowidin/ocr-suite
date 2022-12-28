@@ -90,10 +90,16 @@ class Runner:
         ]
         proc = subprocess.Popen(args, creationflags=flags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        last_output = ''
+
+        def get_optional_text(stream) -> str:
+            return stream.decode('utf-8') if stream is not None else ''
+
         def handle_outputs(timeout):
             outs, errs = proc.communicate(timeout=timeout)
-            if outs is not None and len(outs) != 0:
-                print(outs.decode('utf-8'), end='', sep='', flush=True)
+            out_text = get_optional_text(outs)
+            if len(out_text) != 0:
+                print(out_text, end='', sep='', flush=True)
 
             if proc.returncode != 0:
                 error = errs.decode("utf-8").strip()
@@ -102,11 +108,15 @@ class Runner:
                 return False
 
         def run_for_output():
+            nonlocal last_output
             while proc.poll() is None:
                 try:
                     handle_outputs(timeout=self.OUTPUT_POLLING_INTERVAL)
                 except subprocess.TimeoutExpired as e:
-                    print(e.stdout.decode('utf-8'), end='', sep='', flush=True)
+                    text = get_optional_text(e.stdout)
+                    if len(text) != 0:
+                        print(text[len(last_output):], end='', sep='', flush=True)
+                    last_output = text
 
         try:
             print(f'Running OCR for {path}')

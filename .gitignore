@@ -22,6 +22,7 @@ compile_commands.json
 *.kdev4
 
 .idea
+*.egg-info/
 
 # swap
 [._]*.s[a-w][a-z]

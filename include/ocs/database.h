@@ -34,6 +34,8 @@ public:
    std::int64_t get_starting_frame_number() const;
    bool is_frame_processed(std::int64_t frame_num) const;
 
+   void store_last_frame_number(std::int64_t frame_num) const;
+
 private:
    static void db_update(db::database &db, int from);
 
@@ -46,6 +48,7 @@ private:
    statement_ptr_t add_text_entry_;
    statement_ptr_t get_starting_frame_number_;
    statement_ptr_t is_frame_number_present_;
+   statement_ptr_t store_last_frame_number_;
 
    mutable std::recursive_mutex database_mutex_{};
 };
