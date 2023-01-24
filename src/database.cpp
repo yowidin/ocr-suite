@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 using namespace ocs;
+using namespace ocs::recognition;
 
 using db_t = ocs::db::database;
 
@@ -21,9 +22,9 @@ using db_t = ocs::db::database;
 #include "db/updates/update.inl"
 #undef OCS_IDL_INCLUDE
 
-database::database(std::string db_path)
+database::database(std::string db_path, bool read_only)
    : db_path_{std::move(db_path)}
-   , db_(db_path_) {
+   , db_(db_path_, read_only) {
    db_.init(CURRENT_DB_VERSION, &database::db_update);
    prepare_statements();
 }
@@ -105,6 +106,29 @@ void database::store_last_frame_number(std::int64_t frame_num) const {
    max_frame_number = frame_num;
 }
 
+void database::find_text(const std::string &text, std::vector<search_entry> &entries) const {
+   entries.clear();
+
+   auto &stmt = find_text_;
+   stmt->reset();
+   stmt->bind("ptext", text);
+   auto code = stmt->evaluate();
+
+   while (code == SQLITE_ROW) {
+      entries.emplace_back();
+      auto &entry = entries.back();
+      entry.frame_number = stmt->get_int(0);
+      entry.left = stmt->get_int(1);
+      entry.top = stmt->get_int(2);
+      entry.right = stmt->get_int(3);
+      entry.bottom = stmt->get_int(4);
+      entry.confidence = stmt->get_float(5);
+      entry.text = stmt->get_text(6);
+
+      code = stmt->evaluate();
+   }
+}
+
 void database::prepare_statements() {
    // clang-format off
    get_starting_frame_number_ = std::make_unique<db::statement>("get_starting_frame_number");
@@ -123,6 +147,10 @@ void database::prepare_statements() {
    store_last_frame_number_ = std::make_unique<db::statement>("store_last_frame_number");
    store_last_frame_number_->prepare(db_,
    R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql", true);
+
+   find_text_ = std::make_unique<db::statement>("find_text");
+   find_text_->prepare(db_,
+   R"sql(SELECT frame_num, left, top, right, bottom, confidence, ocr_text FROM ocr_entries WHERE ocr_text LIKE :ptext;)sql", true);
 
    // clang-format on
 }

@@ -2,7 +2,7 @@
 // Created by Dennis Sitelew on 20.12.22.
 //
 
-#include <ocs/bmp.h>
+#include <ocs/recognition/bmp.h>
 #include <cstdio>
 
 #include <array>
@@ -49,11 +49,11 @@ info_header_t make_info_header(std::uint32_t width, std::uint32_t height) {
 
 } // namespace
 
-void ocs::bmp::save_image(std::vector<std::uint8_t> &data,
-                          std::uint32_t width,
-                          std::uint32_t height,
-                          std::string_view filename,
-                          bool flip_rb) {
+void ocs::recognition::bmp::save_image(std::vector<std::uint8_t> &data,
+                                       std::uint32_t width,
+                                       std::uint32_t height,
+                                       std::string_view filename,
+                                       bool flip_rb) {
    constexpr std::uint16_t bytes_per_pixel = 3;
    const std::size_t width_in_bytes = width * bytes_per_pixel;
 

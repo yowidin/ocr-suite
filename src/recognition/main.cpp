@@ -1,7 +1,7 @@
-#include <ocs/bmp.h>
 #include <ocs/database.h>
-#include <ocs/options.h>
-#include <ocs/speed_meter.h>
+#include <ocs/recognition/bmp.h>
+#include <ocs/recognition/options.h>
+#include <ocs/recognition/speed_meter.h>
 
 #include <cstdlib>
 #include <limits>
@@ -13,8 +13,10 @@
 #include <boost/asio/signal_set.hpp>
 #include <indicators/progress_spinner.hpp>
 
+using namespace ocs::recognition;
+
 int main(int argc, const char **argv) {
-   auto pres = ocs::options::parse(argc, argv);
+   auto pres = options::parse(argc, argv);
    if (!pres) {
       return EXIT_FAILURE;
    }
@@ -22,12 +24,12 @@ int main(int argc, const char **argv) {
    const auto options = pres.value();
 
    ocs::database db{options.database_file};
-   auto queue = std::make_shared<ocs::video::queue_t>(options.ocr_threads * 2);
+   auto queue = std::make_shared<video::queue_t>(options.ocr_threads * 2);
 
    /// --- Setup the progress reporters ---
 
    const auto starting_frame_number = db.get_starting_frame_number();
-   ocs::video video_file{options, queue, starting_frame_number};
+   video video_file{options, queue, starting_frame_number};
 
    std::string postfix = "Processing ...";
 
@@ -77,7 +79,7 @@ int main(int argc, const char **argv) {
       spinner.set_option(option::PostfixText{text});
    };
 
-   ocs::speed_meter meter{db.get_starting_frame_number(), progress_callback};
+   speed_meter meter{db.get_starting_frame_number(), progress_callback};
 
    std::string final_text = "Done!";
 
@@ -101,7 +103,7 @@ int main(int argc, const char **argv) {
    /// --- Start the work ---
    auto consumer_func = [&]() {
       try {
-         auto ocr_callback = [&](const ocs::ocr::ocr_result &result) {
+         auto ocr_callback = [&](const ocr::ocr_result &result) {
             meter.add_ocr_frame(result.frame_number);
             spinner.set_progress(result.frame_number);
             db.store(result);
@@ -116,7 +118,7 @@ int main(int argc, const char **argv) {
             return !processed;
          };
 
-         ocs::ocr ocr{options, ocr_callback};
+         ocs::recognition::ocr ocr{options, ocr_callback};
          ocr.start(queue, filter_callback);
       } catch (const std::exception &ex) {
          SPDLOG_ERROR("Consumer thread exception: {}", ex.what());

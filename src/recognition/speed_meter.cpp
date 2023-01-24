@@ -2,9 +2,9 @@
 // Created by Dennis Sitelew on 22.12.22.
 //
 
-#include <ocs/speed_meter.h>
+#include <ocs/recognition/speed_meter.h>
 
-using namespace ocs;
+using namespace ocs::recognition;
 
 using namespace std;
 using namespace std::chrono;

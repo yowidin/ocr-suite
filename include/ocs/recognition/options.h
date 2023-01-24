@@ -2,14 +2,13 @@
 // Created by Dennis Sitelew on 22.12.22.
 //
 
-#ifndef OCR_SUITE_OPTIONS_H
-#define OCR_SUITE_OPTIONS_H
+#pragma once
 
 #include <cstdint>
 #include <optional>
 #include <string>
 
-namespace ocs {
+namespace ocs::recognition {
 
 struct options {
    static std::optional<options> parse(int argc, const char **argv);
@@ -36,6 +35,4 @@ struct options {
    bool save_bitmaps{false};
 };
 
-} // namespace ocs
-
-#endif // OCR_SUITE_OPTIONS_H
+} // namespace ocs::recognition

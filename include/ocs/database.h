@@ -2,10 +2,9 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
-#ifndef OCR_SUITE_DATABASE_H
-#define OCR_SUITE_DATABASE_H
+#pragma once
 
-#include <ocs/ocr.h>
+#include <ocs/recognition/ocr.h>
 
 #include <ocs/db/database.h>
 #include <ocs/db/statement.h>
@@ -26,15 +25,25 @@ private:
    using statement_ptr_t = std::unique_ptr<db::statement>;
 
 public:
-   database(std::string db_path);
+   struct search_entry {
+      int frame_number;
+      std::string text;
+      uint32_t left, top, right, bottom;
+      float confidence;
+   };
 
 public:
-   void store(const ocr::ocr_result &result);
+   database(std::string db_path, bool read_only = false);
+
+public:
+   void store(const ocs::recognition::ocr::ocr_result &result);
 
    std::int64_t get_starting_frame_number() const;
    bool is_frame_processed(std::int64_t frame_num) const;
 
    void store_last_frame_number(std::int64_t frame_num) const;
+
+   void find_text(const std::string &text, std::vector<search_entry> &entries) const;
 
 private:
    static void db_update(db::database &db, int from);
@@ -49,10 +58,9 @@ private:
    statement_ptr_t get_starting_frame_number_;
    statement_ptr_t is_frame_number_present_;
    statement_ptr_t store_last_frame_number_;
+   statement_ptr_t find_text_;
 
    mutable std::recursive_mutex database_mutex_{};
 };
 
 } // namespace ocs
-
-#endif // OCR_SUITE_DATABASE_H

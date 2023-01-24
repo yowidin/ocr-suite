@@ -2,15 +2,15 @@
 // Created by Dennis Sitelew on 22.12.22.
 //
 
-#include <ocs/options.h>
-#include <ocs/video.h>
+#include <ocs/recognition/options.h>
+#include <ocs/recognition/video.h>
 
 #include <boost/filesystem.hpp>
 #include <lyra/lyra.hpp>
 
 #include <thread>
 
-using namespace ocs;
+using namespace ocs::recognition;
 
 namespace {
 

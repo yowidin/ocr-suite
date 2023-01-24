@@ -26,7 +26,7 @@ public:
    using update_funct_t = std::function<void(database &db, int from)>;
 
 public:
-   database(std::string path);
+   database(std::string path, bool read_only = false);
    ~database();
 
 public:
@@ -44,6 +44,9 @@ private:
 private:
    //! Path to the database
    const std::string path_;
+
+   //! Is the database connection read-only?
+   const bool read_only_;
 
    //! Database connection
    struct sqlite3 *db_;

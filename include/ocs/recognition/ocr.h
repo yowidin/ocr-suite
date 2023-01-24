@@ -2,11 +2,10 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
-#ifndef OCR_SUITE_OCR_H
-#define OCR_SUITE_OCR_H
+#pragma once
 
-#include <ocs/options.h>
-#include <ocs/video.h>
+#include <ocs/recognition/options.h>
+#include <ocs/recognition/video.h>
 
 #include <functional>
 #include <string>
@@ -14,7 +13,7 @@
 
 #include <tesseract/baseapi.h>
 
-namespace ocs {
+namespace ocs::recognition {
 
 class ocr {
 public:
@@ -37,7 +36,7 @@ public:
    using ocr_filter_cb_t = std::function<bool(std::int64_t)>;
 
 public:
-   ocr(const ocs::options &opts, ocr_result_cb_t cb);
+   ocr(const options &opts, ocr_result_cb_t cb);
    ocr(const ocr &) = delete;
 
    ocr &operator=(const ocr &) = delete;
@@ -49,7 +48,7 @@ private:
    void do_ocr(const frame_t &frame);
 
 private:
-   const ocs::options *opts_;
+   const options *opts_;
    std::string bitmap_directory_{};
 
    tesseract::TessBaseAPI ocr_api_{};
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace ocs
-
-#endif // OCR_SUITE_OCR_H

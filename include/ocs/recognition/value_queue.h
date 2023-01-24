@@ -2,8 +2,7 @@
 // Created by Dennis Sitelew on 19.12.22.
 //
 
-#ifndef OCR_SUITE_VALUE_QUEUE_H
-#define OCR_SUITE_VALUE_QUEUE_H
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -14,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-namespace ocs {
+namespace ocs::recognition {
 
 /**
  * Holds a limited list of value pointers, allowing a single producer to generate values and multiple consumers to
@@ -167,6 +166,4 @@ std::size_t value_queue<T>::get_remaining_consumer_values() const {
    return consumer_values_.size();
 }
 
-} // namespace ocs
-
-#endif // OCR_SUITE_VALUE_QUEUE_H
+} // namespace ocs::recognition

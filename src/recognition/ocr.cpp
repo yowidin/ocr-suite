@@ -2,9 +2,9 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
-#include <ocs/bmp.h>
-#include <ocs/ocr.h>
-#include <ocs/util.h>
+#include <ocs/recognition/bmp.h>
+#include <ocs/recognition/ocr.h>
+#include <ocs/recognition/util.h>
 
 #include <functional>
 
@@ -12,7 +12,7 @@
 #include <tesseract/baseapi.h>
 #include <boost/filesystem.hpp>
 
-using namespace ocs;
+using namespace ocs::recognition;
 
 namespace {
 
@@ -31,7 +31,7 @@ std::string get_frame_path(const std::string &bitmap_dir, std::int64_t frame_num
 
 } // namespace
 
-ocr::ocr(const ocs::options &opts, ocr_result_cb_t cb)
+ocr::ocr(const options &opts, ocr_result_cb_t cb)
    : opts_{&opts}
    , cb_{std::move(cb)} {
    int res = ocr_api_.Init(opts_->tess_data_path.c_str(), opts_->language.c_str(), tesseract::OEM_LSTM_ONLY);
@@ -66,7 +66,7 @@ void ocr::start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter) {
 
       if (opts_->save_bitmaps) {
          const auto file_name = get_frame_path(bitmap_directory_, frame->frame_number);
-         ocs::bmp::save_image(frame->data, frame->width, frame->height, file_name);
+         bmp::save_image(frame->data, frame->width, frame->height, file_name);
       }
 
       if (filter(frame->frame_number)) {

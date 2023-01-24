@@ -2,13 +2,12 @@
 // Created by Dennis Sitelew on 26.12.22.
 //
 
-#ifndef OCR_SUITE_UTIL_H
-#define OCR_SUITE_UTIL_H
+#pragma once
 
 #include <algorithm>
 #include <string>
 
-namespace ocs {
+namespace ocs::recognition {
 
 // trim from start (in place)
 inline void ltrim(std::string &s) {
@@ -26,6 +25,4 @@ inline void trim(std::string &s) {
    ltrim(s);
 }
 
-} // namespace ocs
-
-#endif // OCR_SUITE_UTIL_H
+} // namespace ocs::recognition

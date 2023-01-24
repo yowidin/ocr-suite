@@ -2,15 +2,14 @@
 // Created by Dennis Sitelew on 22.12.22.
 //
 
-#ifndef OCR_SUITE_SPEED_METER_H
-#define OCR_SUITE_SPEED_METER_H
+#pragma once
 
 #include <chrono>
 #include <cstdint>
 #include <functional>
 #include <mutex>
 
-namespace ocs {
+namespace ocs::recognition {
 
 class speed_meter {
 public:
@@ -50,6 +49,4 @@ private:
    std::int64_t last_print_frame_number_{0};
 };
 
-} // namespace ocs
-
-#endif // OCR_SUITE_SPEED_METER_H
+} // namespace ocs::recognition

@@ -2,11 +2,10 @@
 // Created by Dennis Sitelew on 18.12.22.
 //
 
-#ifndef OCR_SUITE_VIDEO_H
-#define OCR_SUITE_VIDEO_H
+#pragma once
 
-#include <ocs/value_queue.h>
-#include <ocs/options.h>
+#include <ocs/recognition/options.h>
+#include <ocs/recognition/value_queue.h>
 
 #include <cstdint>
 #include <memory>
@@ -14,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace ocs {
+namespace ocs::recognition {
 
 /**
  * A class for getting a single frame from a video file, using the ffmpeg
@@ -75,6 +74,4 @@ private:
    std::unique_ptr<ffmpeg_video_stream> stream_;
 };
 
-} // namespace ocs
-
-#endif // OCR_SUITE_VIDEO_H
+} // namespace ocs::recognition

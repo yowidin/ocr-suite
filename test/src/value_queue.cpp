@@ -2,7 +2,7 @@
 // Created by Dennis Sitelew on 19.12.22.
 //
 
-#include <ocs/value_queue.h>
+#include <ocs/recognition/value_queue.h>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -11,7 +11,7 @@
 #include <thread>
 
 using namespace std;
-using namespace ocs;
+using namespace ocs::recognition;
 
 //! Make sure we can produce more data than our buffers queue can hold.
 //! And also make sure we can shutdown the queue and the application.

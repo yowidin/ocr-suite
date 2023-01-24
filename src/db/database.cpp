@@ -29,8 +29,9 @@ struct error_log_setter {
 ////////////////////////////////////////////////////////////////////////////////
 /// Class: statement
 ////////////////////////////////////////////////////////////////////////////////
-database::database(std::string path)
+database::database(std::string path, bool read_only)
    : path_{std::move(path)}
+   , read_only_{read_only}
    , db_{nullptr}
    , update_db_{nullptr} {
    static error_log_setter setter;
@@ -57,7 +58,12 @@ void database::init(int current_version,
                     std::string_view version_column) {
    SPDLOG_TRACE("Initializing database: {}", path_);
 
-   auto code = sqlite3_open(path_.c_str(), &db_);
+   int code;
+   if (read_only_) {
+      code = sqlite3_open_v2(path_.c_str(), &db_, SQLITE_OPEN_READONLY, nullptr);
+   } else {
+      code = sqlite3_open(path_.c_str(), &db_);
+   }
    if (code) {
       throw std::runtime_error(fmt::format("Can't open database: {}", sqlite3_errmsg(db_)));
    }

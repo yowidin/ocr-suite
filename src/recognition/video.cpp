@@ -2,8 +2,8 @@
 // Created by Dennis Sitelew on 18.12.22.
 //
 
-#include <ocs/util.h>
-#include <ocs/video.h>
+#include <ocs/recognition/util.h>
+#include <ocs/recognition/video.h>
 
 #include <spdlog/spdlog.h>
 
@@ -200,7 +200,7 @@ void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
    std::string msg(required, ' ');
    std::vsnprintf(msg.data(), msg.size(), fmt, vl);
    msg.resize(msg.size() - 1); // Remove the trailing null character
-   ocs::trim(msg);
+   ocs::recognition::trim(msg);
 
    if (avc) {
       spdlog::log(lvl, "[{}] {}", avc->class_name, msg);
@@ -211,7 +211,7 @@ void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
 
 } // namespace ffmpeg
 
-using namespace ocs;
+using namespace ocs::recognition;
 
 //! Helper class for handling the ffmpeg video stream using the hardware
 //! acceleration.
@@ -219,7 +219,7 @@ class video::ffmpeg_video_stream {
 public:
    ffmpeg_video_stream(const options &opts, std::int64_t starting_frame, video &video)
       : filename_(opts.video_file)
-      , filter_(static_cast<ocs::video::frame_filter>(opts.frame_filter))
+      , filter_(static_cast<ocs::recognition::video::frame_filter>(opts.frame_filter))
       , video_{&video} {
       av_log_set_level(AV_LOG_ERROR);
       av_log_set_callback(ffmpeg::log_callback);

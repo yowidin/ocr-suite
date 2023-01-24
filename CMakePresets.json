@@ -50,6 +50,15 @@
       "name": "release-win",
       "inherits": ["windows", "release"],
       "displayName": "release-win"
+    },
+
+    {
+      "name": "unit-tests",
+      "inherits": "debug",
+      "displayName": "unit-tests",
+      "cacheVariables": {
+        "BUILD_TESTS": true
+      }
     }
   ],
   "buildPresets": [
@@ -68,6 +77,10 @@
     {
       "name": "release-win",
       "configurePreset": "release-win"
+    },
+    {
+      "name": "unit-tests",
+      "configurePreset": "unit-tests"
     }
   ]
 }

@@ -2,14 +2,13 @@
 // Created by Dennis Sitelew on 20.12.22.
 //
 
-#ifndef OCR_SUITE_BMP_H
-#define OCR_SUITE_BMP_H
+#pragma once
 
 #include <cstdint>
 #include <string_view>
 #include <vector>
 
-namespace ocs::bmp {
+namespace ocs::recognition::bmp {
 
 void save_image(std::vector<std::uint8_t> &data,
                 std::uint32_t width,
@@ -17,6 +16,4 @@ void save_image(std::vector<std::uint8_t> &data,
                 std::string_view filename,
                 bool flip_rb = true);
 
-} // namespace ocs::bmp
-
-#endif // OCR_SUITE_BMP_H
+} // namespace ocs::recognition::bmp
