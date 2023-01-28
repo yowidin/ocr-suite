@@ -1,11 +1,14 @@
+#include <ocs/config.h>
 #include <ocs/database.h>
 #include <ocs/recognition/bmp.h>
 #include <ocs/recognition/options.h>
 #include <ocs/recognition/speed_meter.h>
 
 #include <cstdlib>
+#include <exception>
 #include <limits>
 #include <memory>
+#include <system_error>
 #include <thread>
 
 #include <spdlog/spdlog.h>
@@ -13,7 +16,29 @@
 #include <boost/asio/signal_set.hpp>
 #include <indicators/progress_spinner.hpp>
 
+#if OCS_TARGET_OS(APPLE)
+#include <pthread.h>
+#endif
+
 using namespace ocs::recognition;
+
+void adjust_thread_priority(std::thread::native_handle_type handle) {
+#if OCS_TARGET_OS(APPLE) || OCS_TARGET_OS(UNIX)
+   int restrict_policy;
+   sched_param restrict_param = {};
+   int err = pthread_getschedparam(handle, &restrict_policy, &restrict_param);
+   if (err) {
+      throw std::system_error(std::error_code(err, std::system_category()), "pthread_getschedparam");
+   }
+
+   restrict_param.sched_priority = sched_get_priority_min(restrict_policy);
+
+   err = pthread_setschedparam(handle, restrict_policy, &restrict_param);
+   if (err) {
+      throw std::system_error(std::error_code(err, std::system_category()), "pthread_setschedparam");
+   }
+#endif
+}
 
 int main(int argc, const char **argv) {
    auto pres = options::parse(argc, argv);
@@ -141,6 +166,7 @@ int main(int argc, const char **argv) {
    std::vector<std::thread> consumers;
    for (auto i = 0; i < options.ocr_threads; ++i) {
       consumers.emplace_back(consumer_func);
+      adjust_thread_priority(consumers.back().native_handle());
    }
 
    bool done = false;

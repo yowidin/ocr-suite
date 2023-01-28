@@ -3,17 +3,12 @@ project(ocr_suite VERSION 0.0.1 LANGUAGES CXX)
 
 # TODO: Probably will have to use the old and rusty conanbuildinfo.cmake file
 
+#################################################################################
+### Setup platform-specific flags
 set(OCS_WINDOWS OFF)
 set(OCS_APPLE OFF)
 set(OCS_UNIX OFF)
 
-set(OCS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(OCS_GENERATED_INCLUDE_DIR "${OCS_GENERATED_DIR}/include")
-set(OCS_GENERATED_CONFIG_HEADER "${OCS_GENERATED_INCLUDE_DIR}/ocs/config.h")
-configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
-
-#################################################################################
-### Setup platform-specific flags
 if (APPLE)
   set(OCS_APPLE ON)
 elseif (UNIX)
@@ -26,6 +21,11 @@ message(STATUS "Windows: ${OCS_WINDOWS}")
 message(STATUS "Apple: ${OCS_APPLE}")
 message(STATUS "Unix: ${OCS_UNIX}")
 
+set(OCS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(OCS_GENERATED_INCLUDE_DIR "${OCS_GENERATED_DIR}/include")
+set(OCS_GENERATED_CONFIG_HEADER "${OCS_GENERATED_INCLUDE_DIR}/ocs/config.h")
+configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
+
 ################################################################################
 ### Library
 find_package(Tesseract CONFIG REQUIRED)
@@ -34,11 +34,11 @@ find_package(PNG CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(lyra CONFIG REQUIRED)
 find_package(SQLite3 CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
+find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
 set(common_libs
     Tesseract::libtesseract ffmpeg::ffmpeg PNG::PNG
     spdlog::spdlog bfg::lyra SQLite::SQLite3
-    Boost::filesystem
+    Boost::filesystem Boost::date_time
     )
 
 add_library(ocr_lib STATIC
