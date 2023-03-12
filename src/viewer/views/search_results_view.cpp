@@ -3,6 +3,7 @@
 //
 
 #include <ocs/viewer/results.h>
+#include <ocs/viewer/views/frame_view.h>
 #include <ocs/viewer/views/search_results_view.h>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -14,8 +15,9 @@
 
 using namespace ocs::viewer::views;
 
-search_results_view::search_results_view(search &srch)
-   : search_{&srch} {
+search_results_view::search_results_view(search &srch, frame_view &frame_view)
+   : search_{&srch}
+   , frame_view_{&frame_view} {
    // Nothing to do here
 }
 
@@ -90,6 +92,11 @@ void search_results_view::sort_results() {
       }
 
       if (!current_frame || current_frame->number != frame_number) {
+         if (current_frame) {
+            // Add number of entries as part of the text
+            current_frame->name += " - " + std::to_string(current_frame->texts.size());
+         }
+
          current_minute->frames.push_back({});
          current_frame = &current_minute->frames.back();
          current_frame->number = frame_number;
@@ -110,6 +117,12 @@ void search_results_view::sort_results() {
       current_frame->texts.emplace_back(std::move(text_entry));
 
       opt_entry = res.get_next();
+   }
+
+   // Handle last frame entry
+   if (current_frame) {
+      // Add number of entries as part of the text
+      current_frame->name += " - " + std::to_string(current_frame->texts.size());
    }
 
    spdlog::debug("Results sorted!");
@@ -141,7 +154,9 @@ void search_results_view::draw() {
                for (const auto &minute : hour.minutes) {
                   if (ImGui::TreeNode(minute.name.c_str())) {
                      for (const auto &frame : minute.frames) {
-                        ImGui::Button(frame.name.c_str());
+                        if (ImGui::Button(frame.name.c_str())) {
+                           frame_view_->set_current_frame(frame);
+                        }
                      }
                      ImGui::TreePop();
                   }

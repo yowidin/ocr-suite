@@ -80,7 +80,7 @@ void results::store(const search::search_entry &result) {
          stmt->bind("pbottom", entry.bottom);
          stmt->bind("pconfidence", entry.confidence);
          stmt->bind("ptext", entry.text);
-         stmt->bind("pfile", base_name);
+         stmt->bind("pfile", result.video_file_path);
          stmt->evaluate();
       }
       db::statement::exec(db_, "COMMIT TRANSACTION");

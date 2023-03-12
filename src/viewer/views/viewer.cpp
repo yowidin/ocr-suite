@@ -13,7 +13,7 @@ viewer::viewer(options opts)
    : opts_{std::move(opts)}
    , search_results_{opts_.in_memory_results}
    , db_{search_results_, opts_}
-   , search_results_view_{db_} {
+   , search_results_view_{db_, frame_view_} {
    window::options win_opts = {.title = "OCS Viewer"};
    window_ = std::make_unique<window>(win_opts, [this]() { draw(); });
 
@@ -68,5 +68,5 @@ void viewer::draw() {
 void viewer::search_text_changed(const std::string &text) {
    db_.find_text(text);
 
-   // TODO
+   // TODO React to enter press
 }

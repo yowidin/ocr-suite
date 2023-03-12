@@ -37,10 +37,9 @@ private:
 
    std::unique_ptr<render::window> window_{};
 
-
+   frame_view frame_view_{};
    search_view search_view_{};
    search_results_view search_results_view_;
-   frame_view frame_view_{};
 };
 
 } // namespace ocs::viewer::views

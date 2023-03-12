@@ -12,6 +12,8 @@
 
 namespace ocs::viewer::views {
 
+class frame_view;
+
 class search_results_view : public drawable {
 public:
    struct text {
@@ -48,7 +50,7 @@ public:
    };
 
 public:
-   search_results_view(search &srch);
+   search_results_view(search &srch, frame_view &frame_view);
 
 public:
    void draw() override;
@@ -59,6 +61,8 @@ private:
 
 private:
    search *search_;
+   frame_view *frame_view_;
+
    bool is_finished_{true};
 
    std::vector<day> days_{};

@@ -24,7 +24,7 @@ struct options {
    std::string db_extension;
 
    //! Store search results only in the RAM
-   bool in_memory_results{false};
+   bool in_memory_results{true};
 };
 
 } // namespace ocs::viewer
