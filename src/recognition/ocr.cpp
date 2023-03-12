@@ -4,7 +4,7 @@
 
 #include <ocs/recognition/bmp.h>
 #include <ocs/recognition/ocr.h>
-#include <ocs/recognition/util.h>
+#include <ocs/util.h>
 
 #include <functional>
 
@@ -80,13 +80,13 @@ void ocr::start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter) {
 void ocr::do_ocr(const frame_t &frame) {
    ocr_api_.SetImage(frame->data.data(), frame->width, frame->height, 3, frame->bytes_per_line);
    if (ocr_api_.Recognize(nullptr) != 0) {
-      SPDLOG_ERROR("Could not recognize frame #{}", frame->frame_number);
+      spdlog::error("Could not recognize frame #{}", frame->frame_number);
       return;
    }
 
    auto it = ocr_api_.GetIterator();
    if (!it) {
-      SPDLOG_ERROR("Error getting recognition results for frame #{}", frame->frame_number);
+      spdlog::error("Error getting recognition results for frame #{}", frame->frame_number);
       return;
    }
 
@@ -106,7 +106,7 @@ void ocr::do_ocr(const frame_t &frame) {
       entry.text = std::string(text);
       delete[] text;
 
-      trim(entry.text);
+      util::trim(entry.text);
 
       if (entry.text.size() < min_letters_threshold_) {
          continue;

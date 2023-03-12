@@ -58,12 +58,12 @@ void database::store(const ocr::ocr_result &result) {
       }
       db::statement::exec(db_, "COMMIT TRANSACTION");
    } catch (const std::exception &e) {
-      SPDLOG_ERROR("Failed to store OCR result for frame {}, {}", result.frame_number, e.what());
+      spdlog::error("Failed to store OCR result for frame {}, {}", result.frame_number, e.what());
       db::statement::exec(db_, "ROLLBACK TRANSACTION");
       throw;
    } catch (...) {
       db::statement::exec(db_, "ROLLBACK TRANSACTION");
-      SPDLOG_ERROR("Failed to store OCR result for frame {}", result.frame_number);
+      spdlog::error("Failed to store OCR result for frame {}", result.frame_number);
       throw;
    }
 }
@@ -134,19 +134,21 @@ void database::prepare_statements() {
    get_starting_frame_number_ = std::make_unique<db::statement>("get_starting_frame_number");
    get_starting_frame_number_->prepare(db_, R"sql(SELECT last_processed_frame FROM metadata;)sql", true);
 
-   add_text_entry_ = std::make_unique<db::statement>("add_text_entry");
-   add_text_entry_->prepare(db_,
-   R"sql(INSERT INTO ocr_entries("frame_num", "left", "top", "right", "bottom", "confidence", "ocr_text")
-         VALUES (:pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext);)sql",
-                           true);
+   if (!db_.read_only()) {
+      add_text_entry_ = std::make_unique<db::statement>("add_text_entry");
+      add_text_entry_->prepare(db_,
+                               R"sql(INSERT INTO ocr_entries("frame_num", "left", "top", "right", "bottom", "confidence", "ocr_text")
+      VALUES (:pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext);)sql",
+                               true);
+
+      store_last_frame_number_ = std::make_unique<db::statement>("store_last_frame_number");
+      store_last_frame_number_->prepare(db_,
+                                        R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql", true);
+   }
 
    is_frame_number_present_ = std::make_unique<db::statement>("is_frame_number_present");
    is_frame_number_present_->prepare(db_,
    R"sql(SELECT COUNT(*) FROM ocr_entries WHERE frame_num = :pnum;)sql", true);
-
-   store_last_frame_number_ = std::make_unique<db::statement>("store_last_frame_number");
-   store_last_frame_number_->prepare(db_,
-   R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql", true);
 
    find_text_ = std::make_unique<db::statement>("find_text");
    find_text_->prepare(db_,

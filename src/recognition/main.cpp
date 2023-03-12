@@ -146,11 +146,11 @@ int main(int argc, const char **argv) {
          ocs::recognition::ocr ocr{options, ocr_callback};
          ocr.start(queue, filter_callback);
       } catch (const std::exception &ex) {
-         SPDLOG_ERROR("Consumer thread exception: {}", ex.what());
+         spdlog::error("Consumer thread exception: {}", ex.what());
          queue->shutdown();
          final_text = "Error!";
       } catch (...) {
-         SPDLOG_ERROR("Unexpected consumer thread exception");
+         spdlog::error("Unexpected consumer thread exception");
          queue->shutdown();
          final_text = "Error!";
       }
@@ -176,11 +176,11 @@ int main(int argc, const char **argv) {
       video_file.start();
       done = true;
    } catch (const std::exception &ex) {
-      SPDLOG_ERROR("Producer thread exception: {}", ex.what());
+      spdlog::error("Producer thread exception: {}", ex.what());
       queue->shutdown();
       final_text = "Error!";
    } catch (...) {
-      SPDLOG_ERROR("Unexpected producer thread exception");
+      spdlog::error("Unexpected producer thread exception");
       queue->shutdown();
       final_text = "Error!";
    }

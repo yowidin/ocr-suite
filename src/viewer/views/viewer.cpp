@@ -11,13 +11,16 @@ using namespace ocs::viewer::render;
 
 viewer::viewer(options opts)
    : opts_{std::move(opts)}
-   , db_{opts_} {
+   , search_results_{opts_.in_memory_results}
+   , db_{search_results_, opts_}
+   , search_results_view_{db_} {
    window::options win_opts = {.title = "OCS Viewer"};
    window_ = std::make_unique<window>(win_opts, [this]() { draw(); });
 
    db_.collect_files();
 
    search_view_.set_text_change_cb([this](const std::string &text) { search_text_changed(text); });
+   search_view_.set_search_engine(db_);
 }
 
 void viewer::run() {

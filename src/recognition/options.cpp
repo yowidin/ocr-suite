@@ -5,6 +5,8 @@
 #include <ocs/recognition/options.h>
 #include <ocs/recognition/video.h>
 
+#include <ocs/ffmpeg/decoder.h>
+
 #include <boost/filesystem.hpp>
 #include <lyra/lyra.hpp>
 
@@ -27,7 +29,7 @@ std::optional<options> options::parse(int argc, const char **argv) {
    options result;
    result.ocr_threads = std::thread::hardware_concurrency();
    result.language = "eng+rus+deu";
-   result.frame_filter = static_cast<std::uint16_t>(video::frame_filter::I_and_P);
+   result.frame_filter = static_cast<std::uint16_t>(ffmpeg::decoder::frame_filter::I_and_P);
    result.tess_data_path = get_default_tess_data_path(argv[0]);
 
    bool show_help{false};

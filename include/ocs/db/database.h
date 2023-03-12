@@ -37,6 +37,8 @@ public:
 
    std::int64_t last_insert_rowid();
 
+   bool read_only() const { return read_only_; }
+
 private:
    int get_file_version(std::string_view table, std::string_view column);
    void perform_update(int from, int to, const update_funct_t &func, const char *table, const char *column);

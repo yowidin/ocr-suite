@@ -4,6 +4,8 @@
 
 #include <ocs/viewer/options.h>
 
+#include <ocs/ffmpeg/decoder.h>
+#include <ocs/recognition/bmp.h>
 #include <ocs/viewer/views/viewer.h>
 
 #include <spdlog/spdlog.h>
@@ -29,6 +31,7 @@ int main_checked(int argc, const char **const argv) {
 int main(int argc, const char **const argv) {
    try {
       spdlog::set_level(spdlog::level::debug);
+      spdlog::set_pattern("[%^%L%$][%t] %v");
 
       return main_checked(argc, argv);
    } catch (const std::exception &e) {

@@ -22,6 +22,9 @@ struct options {
 
    //! Database file extension
    std::string db_extension;
+
+   //! Store search results only in the RAM
+   bool in_memory_results{false};
 };
 
 } // namespace ocs::viewer

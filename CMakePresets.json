@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -12,7 +12,8 @@
       "description": "Default Build",
       "generator": "Ninja",
       "hidden": true,
-      "binaryDir": "${sourceDir}/build/${presetName}"
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/build/${presetName}/conan_toolchain.cmake"
     },
     {
       "name": "windows",

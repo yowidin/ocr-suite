@@ -5,8 +5,9 @@
 #ifndef OCR_SUITE_VIEWER_H
 #define OCR_SUITE_VIEWER_H
 
-#include <ocs/viewer/database.h>
 #include <ocs/viewer/options.h>
+#include <ocs/viewer/search.h>
+#include <ocs/viewer/results.h>
 
 #include <ocs/viewer/views/drawable.h>
 #include <ocs/viewer/views/frame_view.h>
@@ -30,11 +31,15 @@ private:
 
 private:
    options opts_;
-   database db_;
+
+   results search_results_;
+   search db_;
+
    std::unique_ptr<render::window> window_{};
 
+
    search_view search_view_{};
-   search_results_view search_results_view_{};
+   search_results_view search_results_view_;
    frame_view frame_view_{};
 };
 

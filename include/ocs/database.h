@@ -28,7 +28,7 @@ public:
    struct search_entry {
       int frame_number;
       std::string text;
-      uint32_t left, top, right, bottom;
+      int left, top, right, bottom;
       float confidence;
    };
 

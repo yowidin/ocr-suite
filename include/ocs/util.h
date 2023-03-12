@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <string>
 
-namespace ocs::recognition {
+namespace ocs::util {
 
 // trim from start (in place)
 inline void ltrim(std::string &s) {
@@ -25,4 +25,4 @@ inline void trim(std::string &s) {
    ltrim(s);
 }
 
-} // namespace ocs::recognition
+} // namespace ocs::util

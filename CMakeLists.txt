@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 project(ocr_suite VERSION 0.0.1 LANGUAGES CXX)
 
-# TODO: Probably will have to use the old and rusty conanbuildinfo.cmake file
-
 #################################################################################
 ### Setup platform-specific flags
 set(OCS_WINDOWS OFF)
@@ -27,7 +25,7 @@ set(OCS_GENERATED_CONFIG_HEADER "${OCS_GENERATED_INCLUDE_DIR}/ocs/config.h")
 configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
 
 ################################################################################
-### Library
+### Dependencies
 find_package(Tesseract CONFIG REQUIRED)
 find_package(ffmpeg CONFIG REQUIRED)
 find_package(PNG CONFIG REQUIRED)
@@ -41,6 +39,30 @@ set(common_libs
     Boost::filesystem Boost::date_time
     )
 
+################################################################################
+### FFMPEG helper
+add_library(ffmpeg_helper STATIC
+    src/ffmpeg/decoder.cpp
+    src/ffmpeg/traits.cpp
+    )
+
+target_link_libraries(ffmpeg_helper PUBLIC ${common_libs})
+
+target_include_directories(ffmpeg_helper
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+    PUBLIC $<BUILD_INTERFACE:${OCS_GENERATED_INCLUDE_DIR}>
+    )
+
+set_target_properties(ffmpeg_helper PROPERTIES
+    OUTPUT_NAME ffmpeg-helper
+
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+    )
+
+################################################################################
+### Library
 add_library(ocr_lib STATIC
     src/recognition/video.cpp
     src/recognition/bmp.cpp
@@ -52,7 +74,7 @@ add_library(ocr_lib STATIC
     src/db/statement.cpp
     )
 
-target_link_libraries(ocr_lib PUBLIC ${common_libs})
+target_link_libraries(ocr_lib PUBLIC ${common_libs} ffmpeg_helper)
 
 target_include_directories(ocr_lib
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
@@ -111,7 +133,8 @@ set(ui_libs SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL)
 add_executable(ocr_suite_viewer
     src/viewer/main.cpp
     src/viewer/options.cpp
-    src/viewer/database.cpp
+    src/viewer/search.cpp
+    src/viewer/results.cpp
 
     src/viewer/render/frontend.cpp
     src/viewer/render/backend.cpp

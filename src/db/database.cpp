@@ -17,7 +17,7 @@ using namespace ocs::db;
 namespace {
 
 void errorLogCallback(void *pArg, int iErrCode, const char *zMsg) {
-   SPDLOG_WARN("[{}] SQLite error: {}, ", iErrCode, zMsg);
+   spdlog::warn("[{}] SQLite error: {}, ", iErrCode, zMsg);
 }
 
 struct error_log_setter {
@@ -42,11 +42,11 @@ database::~database() {
       return;
    }
 
-   SPDLOG_TRACE("Closing database connection: {}", path_);
+   spdlog::trace("Closing database connection: {}", path_);
 
    auto rc = sqlite3_close(db_);
    while (rc != SQLITE_OK) {
-      SPDLOG_TRACE("[{}] Error closing the DB connection: {}", rc, path_);
+      spdlog::trace("[{}] Error closing the DB connection: {}", rc, path_);
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       rc = sqlite3_close(db_);
    }
@@ -56,7 +56,7 @@ void database::init(int current_version,
                     const update_funct_t &update_func,
                     std::string_view version_table,
                     std::string_view version_column) {
-   SPDLOG_TRACE("Initializing database: {}", path_);
+   spdlog::trace("Initializing database: {}", path_);
 
    int code;
    if (read_only_) {
@@ -70,10 +70,13 @@ void database::init(int current_version,
 
    auto file_version = get_file_version(version_table, version_column);
    if (file_version < current_version) {
+      if (read_only_) {
+         throw std::runtime_error(fmt::format("Read-only database requires an update: {}", path_));
+      }
       perform_update(file_version, current_version, update_func, version_table.data(), version_column.data());
       update_db_.reset(nullptr);
    } else {
-      SPDLOG_TRACE("Database is up to date: {}, version is {}", path_, file_version);
+      spdlog::trace("Database is up to date: {}, version is {}", path_, file_version);
    }
 
    sqlite3_busy_timeout(db_, 10000);
@@ -109,7 +112,7 @@ void database::perform_update(int from, int to, const update_funct_t &func, cons
    }
 
    int current{from + 1};
-   SPDLOG_TRACE("Updating database: {}, from version {} to {}", path_, from, to);
+   spdlog::trace("Updating database: {}, from version {} to {}", path_, from, to);
    func(*this, from);
 
    // Write new version

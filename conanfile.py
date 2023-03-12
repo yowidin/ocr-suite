@@ -1,4 +1,6 @@
-from conans import ConanFile, CMake
+from conan import ConanFile
+from conan.tools.cmake import CMake
+from conan.tools.files import load, copy
 
 
 class Recipe(ConanFile):
@@ -8,7 +10,7 @@ class Recipe(ConanFile):
     description = 'OCR Suite'
     settings = 'os', 'arch', 'compiler', 'build_type'
 
-    generators = 'cmake', 'CMakeToolchain', 'CMakeDeps'
+    generators = 'CMakeToolchain', 'CMakeDeps'
 
     requires = [
         # Main app
@@ -34,6 +36,10 @@ class Recipe(ConanFile):
         self.copy('*.h', src='res/bindings/', dst='bindings')
         self.copy('*.cpp', src='res/bindings/', dst='bindings')
 
+    def source(self):
+        # Check that we can see that the CMakeLists.txt is inside the source folder
+        cmake_file = load(self, "CMakeLists.txt")
+
     def build(self):
         cmake = CMake(self)
         cmake.configure()
@@ -55,3 +61,6 @@ class Recipe(ConanFile):
         self.options['glad'].gl_profile = 'core'
         self.options['glad'].gl_version = '3.2'
 
+    def package(self):
+        cmake = CMake(self)
+        cmake.install()
