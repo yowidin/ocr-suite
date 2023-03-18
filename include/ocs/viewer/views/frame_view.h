@@ -11,6 +11,7 @@
 #include <ocs/ffmpeg/decoder.h>
 
 #include <glad/glad.h>
+#include <imgui.h>
 
 #include <optional>
 
@@ -30,6 +31,7 @@ public:
 private:
    void load_image_from_frame();
    void make_texture(const ffmpeg::decoder::frame &decoded);
+   void scroll_to_text_entry(const search_results_view::text &entry);
 
 private:
    frame_t current_frame_;
@@ -37,6 +39,12 @@ private:
    GLuint texture_handle_{0};
    int texture_width_{0};
    int texture_height_{0};
+
+   bool was_dragging_{false};
+   ImVec2 initial_scroll_position_{};
+
+   ImVec2 view_port_size_;
+   int scroll_to_idx_{-1};
 };
 
 } // namespace ocs::viewer::views

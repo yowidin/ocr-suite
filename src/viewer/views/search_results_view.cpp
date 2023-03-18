@@ -59,6 +59,13 @@ void search_results_view::sort_results() {
       return ss.str();
    };
 
+   auto update_frame_text = [&](auto &frame) {
+     if (frame) {
+        // Add number of entries as part of the text
+        frame->name = fmt::format("{} - {}", frame->name, frame->texts.size());
+     }
+   };
+
    results::optional_entry_t opt_entry = res.get_next();
    while (opt_entry) {
       const auto &entry = opt_entry.value();
@@ -81,21 +88,20 @@ void search_results_view::sort_results() {
          current_day->hours.push_back({});
          current_hour = &current_day->hours.back();
          current_hour->number = hour_number;
-         current_hour->name = std::to_string(hour_number);
+         current_hour->name = fmt::format("{:02}:??", hour_number);
+         current_hour->owner = current_day;
       }
 
       if (!current_minute || current_minute->number != minute_number) {
          current_hour->minutes.push_back({});
          current_minute = &current_hour->minutes.back();
          current_minute->number = minute_number;
-         current_minute->name = std::to_string(minute_number);
+         current_minute->name = fmt::format("{:02}", minute_number);
+         current_minute->owner = current_hour;
       }
 
       if (!current_frame || current_frame->number != frame_number) {
-         if (current_frame) {
-            // Add number of entries as part of the text
-            current_frame->name += " - " + std::to_string(current_frame->texts.size());
-         }
+         update_frame_text(current_frame);
 
          current_minute->frames.push_back({});
          current_frame = &current_minute->frames.back();
@@ -103,6 +109,7 @@ void search_results_view::sort_results() {
          current_frame->name = std::to_string(frame_number);
          current_frame->timestamp = entry.timestamp;
          current_frame->video_file = entry.video_file;
+         current_frame->owner = current_minute;
       }
 
       text text_entry = {
@@ -112,6 +119,7 @@ void search_results_view::sort_results() {
           .bottom = entry.bottom,
           .confidence = entry.confidence,
           .text = entry.text,
+          .owner = current_frame,
       };
 
       current_frame->texts.emplace_back(std::move(text_entry));
@@ -120,10 +128,7 @@ void search_results_view::sort_results() {
    }
 
    // Handle last frame entry
-   if (current_frame) {
-      // Add number of entries as part of the text
-      current_frame->name += " - " + std::to_string(current_frame->texts.size());
-   }
+   update_frame_text(current_frame);
 
    spdlog::debug("Results sorted!");
 }
@@ -156,6 +161,11 @@ void search_results_view::draw() {
                      for (const auto &frame : minute.frames) {
                         if (ImGui::Button(frame.name.c_str())) {
                            frame_view_->set_current_frame(frame);
+                        }
+
+                        if (ImGui::IsItemHovered()) {
+                           ImGui::SetTooltip("%s %.02d:%02d", day.name.c_str(), static_cast<int>(hour.number),
+                                             static_cast<int>(minute.number));
                         }
                      }
                      ImGui::TreePop();

@@ -5,6 +5,7 @@
 #include <ocs/viewer/views/viewer.h>
 
 #include <imgui_internal.h>
+#include <dejavu.h>
 
 using namespace ocs::viewer::views;
 using namespace ocs::viewer::render;
@@ -21,6 +22,10 @@ viewer::viewer(options opts)
 
    search_view_.set_text_change_cb([this](const std::string &text) { search_text_changed(text); });
    search_view_.set_search_engine(db_);
+
+   auto io = ImGui::GetIO();
+   io.Fonts->AddFontFromMemoryCompressedBase85TTF(DejaVu_compressed_data_base85, 15.0, nullptr,
+                                                  io.Fonts->GetGlyphRangesCyrillic());
 }
 
 void viewer::run() {
@@ -32,6 +37,16 @@ void viewer::run() {
 void viewer::draw() {
    // Prepare the initial split layout
    ImGuiID dock_space_id = ImGui::GetID("Workspace");
+
+#if 0
+   static bool flag=false;
+   ImGui::BeginMainMenuBar();
+   ImGui::MenuItem("Debug", NULL, &flag);
+   if (flag) {
+      ImGui::ShowMetricsWindow();
+   }
+   ImGui::EndMainMenuBar();
+#endif
 
    // TODO: Only configure the dock if it it wasn't stored in the settings file (same goes for the window size)
    static bool dock_configured = false;

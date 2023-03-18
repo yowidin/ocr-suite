@@ -26,6 +26,7 @@ public:
 
 private:
    std::string search_text_;
+   std::string last_search_text_;
    text_change_cb_t text_change_cb_;
    ocs::viewer::search *db_;
 

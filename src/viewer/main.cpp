@@ -4,8 +4,6 @@
 
 #include <ocs/viewer/options.h>
 
-#include <ocs/ffmpeg/decoder.h>
-#include <ocs/recognition/bmp.h>
 #include <ocs/viewer/views/viewer.h>
 
 #include <spdlog/spdlog.h>

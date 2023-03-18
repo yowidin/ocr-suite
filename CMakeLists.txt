@@ -162,6 +162,7 @@ target_link_libraries(ocr_suite_viewer PRIVATE ocr_lib ${ui_libs})
 target_include_directories(ocr_suite_viewer PUBLIC
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/bindings>
     PUBLIC $<BUILD_INTERFACE:${stb_SOURCE_DIR}>
+    PRIVATE src/viewer/fonts
     )
 
 set_target_properties(ocr_suite_viewer PROPERTIES

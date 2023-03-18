@@ -16,10 +16,17 @@ class frame_view;
 
 class search_results_view : public drawable {
 public:
+   struct frame;
+   struct minute;
+   struct hour;
+   struct day;
+
    struct text {
       int left, top, right, bottom;
       float confidence;
       std::string text;
+
+      frame *owner;
    };
 
    struct frame {
@@ -29,18 +36,24 @@ public:
       std::string video_file;
 
       std::vector<text> texts;
+
+      minute *owner;
    };
 
    struct minute {
       std::string name;
       std::int64_t number;
       std::vector<frame> frames;
+
+      hour *owner;
    };
 
    struct hour {
       std::string name;
       std::int64_t number;
       std::vector<minute> minutes;
+
+      day *owner;
    };
 
    struct day {
