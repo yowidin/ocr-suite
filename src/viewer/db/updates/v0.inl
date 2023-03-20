@@ -25,7 +25,9 @@ CREATE TABLE results (
    "bottom" INT,
    "confidence" FLOAT,
    "ocr_text" TEXT NOT NULL,
-   "video_file" TEXT NOT NULL
+   "video_file" TEXT NOT NULL,
+   "hour" INT,
+   "minute" INT
 );
 
 CREATE INDEX timestamp_idx ON results(timestamp);

@@ -31,7 +31,25 @@ public:
 private:
    void load_image_from_frame();
    void make_texture(const ffmpeg::decoder::frame &decoded);
-   void scroll_to_text_entry(const search_results_view::text &entry);
+
+   void scroll_to_text_entry(const search_results_view::text &entry) const;
+
+   void jump_to_next_frame();
+   void jump_to_previous_frame();
+
+   void jump_to_next_minute();
+   void jump_to_previous_minute();
+
+   void jump_to_next_hour();
+   void jump_to_previous_hour();
+
+   void jump_to_next_day();
+   void jump_to_previous_day();
+
+   void handle_scroll_to_text_hotkeys();
+   void handle_jump_hotkeys();
+
+   static bool is_shift_pressed();
 
 private:
    frame_t current_frame_;

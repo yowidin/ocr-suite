@@ -23,46 +23,20 @@
 using namespace ocs::viewer;
 namespace fs = boost::filesystem;
 
-namespace {
-
-std::chrono::milliseconds start_time_for_video(const std::string &video_file) {
-   using namespace boost::gregorian;
-   using namespace boost::local_time;
-   using namespace boost::posix_time;
-
-   const auto base_name = fs::basename(video_file);
-
-   const auto time_format = "%Y-%m-%d %H-%M-%S";
-   auto time_input_facet = new local_time_input_facet(time_format);
-
-   std::stringstream ss(base_name);
-   ss.imbue(std::locale(ss.getloc(), time_input_facet));
-
-   local_date_time start_time{not_a_date_time};
-   ss >> start_time;
-
-   const ptime time_t_epoch(date(1970, 1, 1));
-   const time_duration diff = start_time.utc_time() - time_t_epoch;
-   const auto start_ms = diff.total_milliseconds();
-
-   return std::chrono::milliseconds{start_ms};
-}
-
-} // namespace
-
 results::results(bool in_memory)
-   : db_path_{in_memory ? "[memory]" : "search-results.db"}
+   : db_path_{in_memory ? ":memory:" : "search-results.db"}
    , db_{db_path_} {
    db_.init(CURRENT_DB_VERSION, &results::db_update);
    prepare_statements();
 }
 
 void results::store(const search::search_entry &result) {
+   using namespace std::chrono;
+
    ocs::recognition::options opts{.video_file = result.video_file_path};
    ocs::recognition::video video{opts, {nullptr}};
 
    const auto start_time = start_time_for_video(result.video_file_path);
-   const auto base_name = fs::basename(result.video_file_path);
 
    auto &stmt = add_text_entry_;
 
@@ -70,6 +44,11 @@ void results::store(const search::search_entry &result) {
       db::statement::exec(db_, "BEGIN TRANSACTION");
       for (auto &entry : result.entries) {
          const auto timestamp = start_time + video.frame_number_to_milliseconds(entry.frame_number);
+
+         auto total_seconds = duration_cast<seconds>(timestamp - start_time);
+         const auto num_hours = duration_cast<hours>(total_seconds);
+         total_seconds -= num_hours;
+         const auto num_minutes = duration_cast<minutes>(total_seconds);
 
          stmt->reset();
          stmt->bind("pts", timestamp.count());
@@ -81,6 +60,8 @@ void results::store(const search::search_entry &result) {
          stmt->bind("pconfidence", entry.confidence);
          stmt->bind("ptext", entry.text);
          stmt->bind("pfile", result.video_file_path);
+         stmt->bind("phour", (int)num_hours.count());
+         stmt->bind("pminute", (int)num_minutes.count());
          stmt->evaluate();
       }
       db::statement::exec(db_, "COMMIT TRANSACTION");
@@ -122,6 +103,8 @@ results::optional_entry_t results::get_next() {
    result.confidence = stmt->get_float(6);
    result.text = stmt->get_text(7);
    result.video_file = stmt->get_text(8);
+   result.hour = stmt->get_int(9);
+   result.minute = stmt->get_int(10);
 
    return result;
 }
@@ -130,8 +113,8 @@ void results::prepare_statements() {
    add_text_entry_ = std::make_unique<db::statement>("add_text_entry");
    add_text_entry_->prepare(
        db_,
-       R"sql(INSERT INTO results("timestamp", "frame_number", "left", "top", "right", "bottom", "confidence", "ocr_text", "video_file")
-             VALUES (:pts, :pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext, :pfile);)sql",
+       R"sql(INSERT INTO results("timestamp", "frame_number", "left", "top", "right", "bottom", "confidence", "ocr_text", "video_file", "hour", "minute")
+             VALUES (:pts, :pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext, :pfile, :phour, :pminute);)sql",
        true);
 
    clear_ = std::make_unique<db::statement>("clear");
@@ -139,8 +122,31 @@ void results::prepare_statements() {
 
    select_ = std::make_unique<db::statement>("select");
    select_->prepare(db_,
-                    R"sql(SELECT timestamp, frame_number, "left", top, "right", bottom, confidence, ocr_text, video_file
+                    R"sql(SELECT timestamp, frame_number, "left", top, "right", bottom, confidence, ocr_text, video_file, hour, minute
                           FROM results
                           ORDER BY timestamp;)sql",
                     true);
+}
+
+std::chrono::milliseconds results::start_time_for_video(const std::string &video_file) {
+   using namespace boost::gregorian;
+   using namespace boost::local_time;
+   using namespace boost::posix_time;
+
+   const auto base_name = fs::basename(video_file);
+
+   const auto time_format = "%Y-%m-%d %H-%M-%S";
+   auto time_input_facet = new local_time_input_facet(time_format);
+
+   std::stringstream ss(base_name);
+   ss.imbue(std::locale(ss.getloc(), time_input_facet));
+
+   local_date_time start_time{not_a_date_time};
+   ss >> start_time;
+
+   const ptime time_t_epoch(date(1970, 1, 1));
+   const time_duration diff = start_time.utc_time() - time_t_epoch;
+   const auto start_ms = diff.total_milliseconds();
+
+   return std::chrono::milliseconds{start_ms};
 }

@@ -12,7 +12,6 @@
 using namespace ocs::viewer::views;
 
 // TODO: Improve navigation
-//  - Fix time decoding
 //  - Jump no next/previous
 //    - Text entry
 //    - Frame
@@ -77,7 +76,7 @@ void frame_view::set_current_frame(const frame_t &frame) {
    }
 }
 
-void frame_view::scroll_to_text_entry(const search_results_view::text &entry) {
+void frame_view::scroll_to_text_entry(const search_results_view::text &entry) const {
    const auto view_port_middle = ImVec2{view_port_size_.x / 2.0f, view_port_size_.y / 2.0f};
    const auto entry_half_size =
        ImVec2{static_cast<float>(entry.right - entry.left) / 2.0f, static_cast<float>(entry.top - entry.bottom) / 2.0f};
@@ -86,6 +85,86 @@ void frame_view::scroll_to_text_entry(const search_results_view::text &entry) {
 
    ImGui::SetScrollX(entry_middle.x - view_port_middle.x);
    ImGui::SetScrollY(entry_middle.y - view_port_middle.y);
+}
+
+void frame_view::jump_to_next_frame() {
+   spdlog::debug("+F");
+}
+
+void frame_view::jump_to_previous_frame() {
+   spdlog::debug("-F");
+}
+
+void frame_view::jump_to_next_minute() {
+   spdlog::debug("+M");
+}
+
+void frame_view::jump_to_previous_minute() {
+   spdlog::debug("-M");
+}
+
+bool frame_view::is_shift_pressed() {
+   return ImGui::IsKeyDown(ImGuiKey_ModShift);
+}
+
+void frame_view::jump_to_next_hour() {
+   if (is_shift_pressed()) {
+      return jump_to_next_day();
+   }
+
+   spdlog::debug("+H");
+}
+
+void frame_view::jump_to_previous_hour() {
+   if (is_shift_pressed()) {
+      return jump_to_previous_day();
+   }
+
+   spdlog::debug("-H");
+}
+
+void frame_view::jump_to_next_day() {
+   spdlog::debug("+D");
+}
+
+void frame_view::jump_to_previous_day() {
+   spdlog::debug("-D");
+}
+
+void frame_view::handle_scroll_to_text_hotkeys() {
+   for (int i = ImGuiKey_1; i <= ImGuiKey_9; ++i) {
+      const auto idx = (i - ImGuiKey_1);
+      if (idx >= current_frame_.value().texts.size()) {
+         break;
+      }
+
+      if (ImGui::IsKeyPressed(i)) {
+         scroll_to_idx_ = idx;
+         break;
+      }
+   }
+
+   if (scroll_to_idx_ == -1 && ImGui::IsKeyPressed(ImGuiKey_Space)) {
+      scroll_to_idx_ = 0;
+   }
+}
+
+void frame_view::handle_jump_hotkeys() {
+   static std::map<int, std::function<void()>> keymap = {
+       {ImGuiKey_UpArrow, [this] { jump_to_previous_frame(); }},
+       {ImGuiKey_DownArrow, [this] { jump_to_next_frame(); }},
+       {ImGuiKey_LeftArrow, [this] { jump_to_previous_minute(); }},
+       {ImGuiKey_RightArrow, [this] { jump_to_next_minute(); }},
+       {ImGuiKey_PageUp, [this] { jump_to_previous_hour(); }},
+       {ImGuiKey_PageDown, [this] { jump_to_next_hour(); }},
+   };
+
+   for (auto &kv : keymap) {
+      if (ImGui::IsKeyPressed(kv.first)) {
+         kv.second();
+         break;
+      }
+   }
 }
 
 void frame_view::draw() {
@@ -164,21 +243,8 @@ void frame_view::draw() {
          auto clip_max = ImVec2(clip_min.x + view_port_size_.x, clip_min.y + view_port_size_.y);
          draw_list->PushClipRect(clip_min, clip_max, true);
 
-         for (int i = ImGuiKey_1; i <= ImGuiKey_9; ++i) {
-            const auto idx = (i - ImGuiKey_1);
-            if (idx >= frame.texts.size()) {
-               break;
-            }
-
-            if (ImGui::IsKeyPressed(i)) {
-               scroll_to_idx_ = idx;
-               break;
-            }
-         }
-
-         if (scroll_to_idx_ == -1 && ImGui::IsKeyPressed(ImGuiKey_Space)) {
-            scroll_to_idx_ = 0;
-         }
+         handle_scroll_to_text_hotkeys();
+         handle_jump_hotkeys();
 
          bool scrolled = false;
          for (std::size_t i = 0; i < frame.texts.size(); ++i) {

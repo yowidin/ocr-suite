@@ -33,6 +33,7 @@ public:
       float confidence;
       std::string text;
       std::string video_file;
+      int hour, minute;
    };
    using optional_entry_t = std::optional<entry>;
 
@@ -45,6 +46,8 @@ public:
 
    void start_selection();
    optional_entry_t get_next();
+
+   static std::chrono::milliseconds start_time_for_video(const std::string &video_file);
 
 private:
    static void db_update(db::database &db, int from);

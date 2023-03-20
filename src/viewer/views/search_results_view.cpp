@@ -33,14 +33,13 @@ void search_results_view::sort_results() {
    results &res = search_->get_results();
    res.start_selection();
 
-   auto date_time_from_timestamp = [](const auto ts) {
+   auto date_time_from_video_file_start = [](const auto ts) {
       using namespace boost::gregorian;
       using namespace boost::local_time;
       using namespace boost::posix_time;
 
       const ptime time_t_epoch(date(1970, 1, 1));
-      const auto as_posix = time_t_epoch + milliseconds(ts);
-
+      const auto as_posix = time_t_epoch + milliseconds(ts.count());
       return as_posix;
    };
 
@@ -66,15 +65,14 @@ void search_results_view::sort_results() {
      }
    };
 
+   using namespace std::chrono;
    results::optional_entry_t opt_entry = res.get_next();
    while (opt_entry) {
       const auto &entry = opt_entry.value();
-      const auto entry_date_time = date_time_from_timestamp(entry.timestamp);
+      const auto file_start = results::start_time_for_video(entry.video_file);
+      const auto entry_date_time = date_time_from_video_file_start(file_start);
       const auto entry_date = entry_date_time.date();
-      const auto entry_time = entry_date_time.time_of_day();
       const auto day_number = entry_date.julian_day();
-      const auto hour_number = entry_time.hours();
-      const auto minute_number = entry_time.minutes();
       const auto frame_number = entry.frame;
 
       if (!current_day || current_day->number != day_number) {
@@ -84,19 +82,19 @@ void search_results_view::sort_results() {
          current_day->number = day_number;
       }
 
-      if (!current_hour || current_hour->number != hour_number) {
+      if (!current_hour || current_hour->number != entry.hour) {
          current_day->hours.push_back({});
          current_hour = &current_day->hours.back();
-         current_hour->number = hour_number;
-         current_hour->name = fmt::format("{:02}:??", hour_number);
+         current_hour->number = entry.hour;
+         current_hour->name = fmt::format("{:02}:??", entry.hour);
          current_hour->owner = current_day;
       }
 
-      if (!current_minute || current_minute->number != minute_number) {
+      if (!current_minute || current_minute->number != entry.minute) {
          current_hour->minutes.push_back({});
          current_minute = &current_hour->minutes.back();
-         current_minute->number = minute_number;
-         current_minute->name = fmt::format("{:02}", minute_number);
+         current_minute->number = entry.minute;
+         current_minute->name = fmt::format("{:02}", entry.minute);
          current_minute->owner = current_hour;
       }
 
@@ -164,8 +162,8 @@ void search_results_view::draw() {
                         }
 
                         if (ImGui::IsItemHovered()) {
-                           ImGui::SetTooltip("%s %.02d:%02d", day.name.c_str(), static_cast<int>(hour.number),
-                                             static_cast<int>(minute.number));
+                           ImGui::SetTooltip("%s %.02d:%02d (%lld)", day.name.c_str(), static_cast<int>(hour.number),
+                                             static_cast<int>(minute.number), frame.timestamp);
                         }
                      }
                      ImGui::TreePop();
