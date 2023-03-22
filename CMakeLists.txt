@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(ocr_suite VERSION 0.0.1 LANGUAGES CXX)
+project(ocr_suite VERSION 0.1.0 LANGUAGES CXX)
 
 #################################################################################
 ### Setup platform-specific flags

@@ -5,7 +5,7 @@ from conan.tools.files import load, copy
 
 class Recipe(ConanFile):
     name = 'ocr-suite'
-    version = '0.0.1'
+    version = '0.1.0'
 
     description = 'OCR Suite'
     settings = 'os', 'arch', 'compiler', 'build_type'
@@ -31,6 +31,11 @@ class Recipe(ConanFile):
     ]
 
     keep_imports = True
+
+    def requirements(self):
+        # Override incompatible dependencies
+        self.requires('openssl/1.1.1t', override=True)
+        self.requires('xz_utils/5.4.0', override=True)
 
     def imports(self):
         self.copy('*.h', src='res/bindings/', dst='bindings')

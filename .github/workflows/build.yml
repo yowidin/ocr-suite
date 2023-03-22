@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install conan
+          pip install conan~=1.59
 
       - name: Install dependencies (Windows)
         if: startsWith(matrix.os, 'windows')
