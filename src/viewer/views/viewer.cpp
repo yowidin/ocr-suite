@@ -12,8 +12,9 @@ using namespace ocs::viewer::render;
 
 viewer::viewer(options opts)
    : opts_{std::move(opts)}
-   , search_results_{opts_.in_memory_results}
    , db_{search_results_, opts_}
+   , frame_view_{search_results_view_}
+   , search_results_{opts_.in_memory_results}
    , search_results_view_{db_, frame_view_} {
    window::options win_opts = {.title = "OCS Viewer"};
    window_ = std::make_unique<window>(win_opts, [this]() { draw(); });

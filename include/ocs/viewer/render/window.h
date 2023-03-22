@@ -37,6 +37,10 @@ public:
    bool can_stop() const { return stop_; }
    void update();
 
+   void set_title(const std::string &title);
+
+   static window &instance();
+
 private:
    void draw();
 
@@ -50,6 +54,8 @@ private:
    SDL_GLContext context_;
    SDL_Event event_{};
    std::unique_ptr<render::frontend> frontend_;
+
+   std::string title_{};
 };
 
 } // namespace ocs::viewer::render

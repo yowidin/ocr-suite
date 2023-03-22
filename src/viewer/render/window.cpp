@@ -55,9 +55,13 @@ void consume_errors(std::string_view context) {
 
 } // namespace
 
+static window *g_instance = nullptr;
+
 window::window(options opts, draw_cb_t cb)
    : options_{std::move(opts)}
    , draw_cb_{std::move(cb)} {
+   g_instance = this;
+
    // Setup SDL
    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
       throw_sdl_error("SDL_Init");
@@ -138,6 +142,15 @@ window::~window() {
       SDL_DestroyWindow(window_);
       window_ = nullptr;
    }
+}
+
+window &window::instance() {
+   return *g_instance;
+}
+
+void window::set_title(const std::string &title) {
+   title_ = title;
+   SDL_SetWindowTitle(window_, title_.c_str());
 }
 
 void window::update() {

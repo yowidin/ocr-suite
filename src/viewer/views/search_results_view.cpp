@@ -59,11 +59,14 @@ void search_results_view::sort_results() {
    };
 
    auto update_frame_text = [&](auto &frame) {
-     if (frame) {
-        // Add number of entries as part of the text
-        frame->name = fmt::format("{} - {}", frame->name, frame->texts.size());
-     }
+      if (frame) {
+         // Add number of entries as part of the text
+         frame->name = fmt::format("{} - {}", frame->name, frame->texts.size());
+      }
    };
+
+   // NOTE: We cannot set the owners immediately, because the pointers may be invalidated once we add more siblings to
+   // the parent
 
    using namespace std::chrono;
    results::optional_entry_t opt_entry = res.get_next();
@@ -80,6 +83,8 @@ void search_results_view::sort_results() {
          current_day = &days_.back();
          current_day->name = date_to_string(entry_date);
          current_day->number = day_number;
+         current_day->owner_idx = days_.size() - 1;
+         current_hour = nullptr;
       }
 
       if (!current_hour || current_hour->number != entry.hour) {
@@ -87,7 +92,8 @@ void search_results_view::sort_results() {
          current_hour = &current_day->hours.back();
          current_hour->number = entry.hour;
          current_hour->name = fmt::format("{:02}:??", entry.hour);
-         current_hour->owner = current_day;
+         current_hour->owner_idx = current_day->hours.size() - 1;
+         current_minute = nullptr;
       }
 
       if (!current_minute || current_minute->number != entry.minute) {
@@ -95,7 +101,10 @@ void search_results_view::sort_results() {
          current_minute = &current_hour->minutes.back();
          current_minute->number = entry.minute;
          current_minute->name = fmt::format("{:02}", entry.minute);
-         current_minute->owner = current_hour;
+         current_minute->owner_idx = current_hour->minutes.size() - 1;
+
+         update_frame_text(current_frame);
+         current_frame = nullptr;
       }
 
       if (!current_frame || current_frame->number != frame_number) {
@@ -107,7 +116,7 @@ void search_results_view::sort_results() {
          current_frame->name = std::to_string(frame_number);
          current_frame->timestamp = entry.timestamp;
          current_frame->video_file = entry.video_file;
-         current_frame->owner = current_minute;
+         current_frame->owner_idx = current_minute->frames.size() - 1;
       }
 
       text text_entry = {
@@ -118,11 +127,27 @@ void search_results_view::sort_results() {
           .confidence = entry.confidence,
           .text = entry.text,
           .owner = current_frame,
+          .owner_idx = current_frame->texts.size(),
       };
 
       current_frame->texts.emplace_back(std::move(text_entry));
 
       opt_entry = res.get_next();
+   }
+
+   // Reassign the owners
+   for (auto &day : days_) {
+      for (auto &hour : day.hours) {
+         hour.owner = &day;
+
+         for (auto &minute : hour.minutes) {
+            minute.owner = &hour;
+
+            for (auto &frame : minute.frames) {
+               frame.owner = &minute;
+            }
+         }
+      }
    }
 
    // Handle last frame entry
@@ -134,21 +159,15 @@ void search_results_view::sort_results() {
 void search_results_view::draw() {
    ImGui::Begin(name());
 
-   static const char *text = "Search Results....";
-
    const bool is_finished = search_->is_finished();
    if (is_finished && !is_finished_) {
       // Finished after starting a search on some other frame
-      text = "Search done!";
       is_finished_ = true;
       sort_results();
    } else if (!is_finished && is_finished_) {
       // Started a new search
-      text = "Search started!";
       is_finished_ = false;
    }
-
-   ImGui::Text("%s", text);
 
    for (const auto &day : days_) {
       if (ImGui::TreeNode(day.name.c_str())) {

@@ -27,6 +27,7 @@ public:
       std::string text;
 
       frame *owner;
+      std::size_t owner_idx;
    };
 
    struct frame {
@@ -38,6 +39,7 @@ public:
       std::vector<text> texts;
 
       minute *owner;
+      std::size_t owner_idx;
    };
 
    struct minute {
@@ -46,6 +48,7 @@ public:
       std::vector<frame> frames;
 
       hour *owner;
+      std::size_t owner_idx;
    };
 
    struct hour {
@@ -54,12 +57,15 @@ public:
       std::vector<minute> minutes;
 
       day *owner;
+      std::size_t owner_idx;
    };
 
    struct day {
       std::string name;
       std::int64_t number;
       std::vector<hour> hours;
+
+      std::size_t owner_idx;
    };
 
 public:
@@ -68,6 +74,8 @@ public:
 public:
    void draw() override;
    const char *name() const override { return "SearchResults"; }
+
+   auto &get_days() { return days_; }
 
 private:
    void sort_results();

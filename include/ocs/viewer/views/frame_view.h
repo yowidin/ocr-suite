@@ -22,6 +22,9 @@ public:
    using frame_t = std::optional<search_results_view::frame>;
 
 public:
+   frame_view(search_results_view &search_results);
+
+public:
    void set_current_frame(const frame_t &frame);
 
 public:
@@ -53,6 +56,7 @@ private:
 
 private:
    frame_t current_frame_;
+   search_results_view *search_results_view_;
 
    GLuint texture_handle_{0};
    int texture_width_{0};
