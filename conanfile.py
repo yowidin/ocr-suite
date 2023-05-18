@@ -1,6 +1,10 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake
-from conan.tools.files import load, copy
+from conan.tools.files import copy
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
+
+from typing import List
+
+import os
 
 
 class Recipe(ConanFile):
@@ -10,8 +14,6 @@ class Recipe(ConanFile):
     description = 'OCR Suite'
     settings = 'os', 'arch', 'compiler', 'build_type'
 
-    generators = 'CMakeToolchain', 'CMakeDeps'
-
     requires = [
         # Main app
         'ffmpeg/5.0',
@@ -20,7 +22,7 @@ class Recipe(ConanFile):
         'catch2/3.2.1',
         'spdlog/1.9.2',
         'lyra/1.6.1',
-        'sqlite3/3.40.0',
+        'sqlite-burrito/0.2.1@conan-burrito/stable',
         'indicators/2.2',
         'boost/1.80.0',
 
@@ -37,19 +39,6 @@ class Recipe(ConanFile):
         self.requires('openssl/1.1.1t', override=True)
         self.requires('xz_utils/5.4.0', override=True)
 
-    def imports(self):
-        self.copy('*.h', src='res/bindings/', dst='bindings')
-        self.copy('*.cpp', src='res/bindings/', dst='bindings')
-
-    def source(self):
-        # Check that we can see that the CMakeLists.txt is inside the source folder
-        cmake_file = load(self, "CMakeLists.txt")
-
-    def build(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
-
     def configure(self):
         # JPEG and libx264 are breaking the build on Ubuntu
         self.options['leptonica'].with_jpeg = False
@@ -65,6 +54,37 @@ class Recipe(ConanFile):
         self.options['glad'].spec = 'gl'
         self.options['glad'].gl_profile = 'core'
         self.options['glad'].gl_version = '3.2'
+
+    def layout(self):
+        cmake_layout(self)
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
+
+    def _import_bindings(self, target_dir):
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+
+        for dep in self.dependencies.values():
+            srcdirs = dep.cpp_info.srcdirs  # type: List[str]
+            if len(srcdirs) == 0:
+                continue
+
+            for src_dir in srcdirs:
+                print(src_dir)
+                copy(self, pattern='*.h', dst=target_dir, src=src_dir)
+                copy(self, pattern='*.cpp', dst=target_dir, src=src_dir)
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
+
+        cmake_deps = CMakeDeps(self)
+        cmake_deps.generate()
+
+        self._import_bindings(target_dir=os.path.join(self.build_folder, 'bindings'))
 
     def package(self):
         cmake = CMake(self)
