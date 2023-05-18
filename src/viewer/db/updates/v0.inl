@@ -8,7 +8,7 @@
 
 namespace {
 
-void update_v0(ocs::db::database &db) {
+void update_v0(sqlite_burrito::versioned_database &db) {
    auto sql = R"sql(
 BEGIN TRANSACTION;
 
@@ -34,7 +34,7 @@ CREATE INDEX timestamp_idx ON results(timestamp);
 
 COMMIT;
 )sql";
-   return ocs::db::statement::exec(db, sql);
+   sqlite_burrito::statement::execute(db.get_connection(), sql);
 }
 
 } // namespace

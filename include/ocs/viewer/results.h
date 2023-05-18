@@ -6,8 +6,7 @@
 
 #include <ocs/viewer/search.h>
 
-#include <ocs/db/database.h>
-#include <ocs/db/statement.h>
+#include <sqlite-burrito/versioned_database.h>
 
 #include <memory>
 #include <mutex>
@@ -22,8 +21,7 @@ class results {
 private:
    static const int CURRENT_DB_VERSION;
 
-   //! Unique statement pointer type
-   using statement_ptr_t = std::unique_ptr<db::statement>;
+   using statement_t = sqlite_burrito::statement;
 
 public:
    struct entry {
@@ -38,7 +36,7 @@ public:
    using optional_entry_t = std::optional<entry>;
 
 public:
-   results(bool in_memory);
+   explicit results(bool in_memory);
 
 public:
    void store(const search::search_entry &result);
@@ -50,17 +48,17 @@ public:
    static std::chrono::milliseconds start_time_for_video(const std::string &video_file);
 
 private:
-   static void db_update(db::database &db, int from);
+   static void db_update(sqlite_burrito::versioned_database &con, int from, std::error_code &ec);
 
    void prepare_statements();
 
 private:
    std::string db_path_;
-   ocs::db::database db_;
+   sqlite_burrito::versioned_database db_;
 
-   statement_ptr_t add_text_entry_;
-   statement_ptr_t clear_;
-   statement_ptr_t select_;
+   statement_t add_text_entry_;
+   statement_t clear_;
+   statement_t select_;
 
    mutable std::recursive_mutex database_mutex_{};
 };

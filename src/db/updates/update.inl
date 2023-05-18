@@ -8,7 +8,9 @@
 
 const int ocs::database::CURRENT_DB_VERSION = 3;
 
-void ocs::database::db_update(db_t &db, int from) {
+void ocs::database::db_update(sqlite_burrito::versioned_database &db, int from, std::error_code &ec) {
+   spdlog::trace("Updating database: from version {}", from);
+
    switch (from) {
       case 0:
          return update_v0(db);
@@ -20,6 +22,7 @@ void ocs::database::db_update(db_t &db, int from) {
          return update_v2(db);
 
       default:
-         throw std::runtime_error("Unknown database version: " + std::to_string(from));
+         ec = std::make_error_code(std::errc::invalid_argument);
+         return;
    }
 }
