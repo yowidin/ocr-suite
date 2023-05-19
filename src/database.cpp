@@ -51,7 +51,7 @@ void database::store(const ocr::ocr_result &result) {
    auto &stmt = add_text_entry_;
 
    try {
-      sqlite_burrito::statement::execute(db_.get_connection(), "BEGIN TRANSACTION");
+      auto transaction = db_.get_connection().begin_transaction();
 
       for (auto &entry : result.entries) {
          stmt.reset();
@@ -65,14 +65,12 @@ void database::store(const ocr::ocr_result &result) {
          stmt.execute();
       }
 
-      sqlite_burrito::statement::execute(db_.get_connection(), "COMMIT TRANSACTION");
+      transaction.commit();
    } catch (const std::exception &e) {
       spdlog::error("Failed to store OCR result for frame {}, {}", result.frame_number, e.what());
-      sqlite_burrito::statement::execute(db_.get_connection(), "ROLLBACK TRANSACTION");
       throw;
    } catch (...) {
       spdlog::error("Failed to store OCR result for frame {}", result.frame_number);
-      sqlite_burrito::statement::execute(db_.get_connection(), "ROLLBACK TRANSACTION");
       throw;
    }
 }

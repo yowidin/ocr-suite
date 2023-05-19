@@ -47,7 +47,7 @@ void results::store(const search::search_entry &result) {
    auto &stmt = add_text_entry_;
 
    try {
-      sqlite_burrito::statement::execute(db_.get_connection(), "BEGIN TRANSACTION");
+      auto transaction = db_.get_connection().begin_transaction();
 
       for (auto &entry : result.entries) {
          const auto timestamp = start_time + video.frame_number_to_milliseconds(entry.frame_number);
@@ -72,14 +72,12 @@ void results::store(const search::search_entry &result) {
          stmt.execute();
       }
 
-      sqlite_burrito::statement::execute(db_.get_connection(), "COMMIT TRANSACTION");
+      transaction.commit();
    } catch (const std::exception &e) {
       spdlog::error("Failed to store search results for file {}, {}", result.video_file_path, e.what());
-      sqlite_burrito::statement::execute(db_.get_connection(), "ROLLBACK TRANSACTION");
       throw;
    } catch (...) {
       spdlog::error("Failed to store search results for file {}", result.video_file_path);
-      sqlite_burrito::statement::execute(db_.get_connection(), "ROLLBACK TRANSACTION");
       throw;
    }
 }

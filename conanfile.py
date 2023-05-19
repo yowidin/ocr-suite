@@ -22,7 +22,7 @@ class Recipe(ConanFile):
         'catch2/3.2.1',
         'spdlog/1.9.2',
         'lyra/1.6.1',
-        'sqlite-burrito/0.2.1@conan-burrito/stable',
+        'sqlite-burrito/0.2.2@conan-burrito/stable',
         'indicators/2.2',
         'boost/1.80.0',
 
