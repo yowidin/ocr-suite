@@ -62,6 +62,10 @@ class Recipe(ConanFile):
         # SDL settings
         self.options['sdl'].pulse = False
 
+        if self.settings.os == 'Macos':
+            self.options['boost'].with_stacktrace_backtrace = False
+
+
     def layout(self):
         cmake_layout(self)
 
