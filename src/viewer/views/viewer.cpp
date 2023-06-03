@@ -25,7 +25,8 @@ viewer::viewer(options opts)
    search_view_.set_search_engine(db_);
 
    auto io = ImGui::GetIO();
-   io.Fonts->AddFontFromMemoryCompressedBase85TTF(DejaVu_compressed_data_base85, 15.0, nullptr,
+   auto font_height = 16.0f;
+   io.Fonts->AddFontFromMemoryCompressedBase85TTF(DejaVu_compressed_data_base85, font_height, nullptr,
                                                   io.Fonts->GetGlyphRangesCyrillic());
 }
 

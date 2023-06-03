@@ -15,12 +15,11 @@ def do_run(*args, **kwargs):
 
 def main():
     parser = ArgumentParser('Project builder')
-    parser.add_argument('--preset', default='Release', help='Build preset')
 
     args = parser.parse_args()
 
     source_dir = os.getcwd()
-    build_dir = os.path.join(source_dir, 'build', args.preset)
+    build_dir = os.path.join(source_dir, 'build', 'release')
 
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)

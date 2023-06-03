@@ -13,6 +13,8 @@
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 
+#include <cinttypes>
+
 using namespace ocs::viewer::views;
 
 search_results_view::search_results_view(search &srch, frame_view &frame_view)
@@ -181,7 +183,7 @@ void search_results_view::draw() {
                         }
 
                         if (ImGui::IsItemHovered()) {
-                           ImGui::SetTooltip("%s %.02d:%02d (%lld)", day.name.c_str(), static_cast<int>(hour.number),
+                           ImGui::SetTooltip("%s %.02d:%02d (%" PRIi64 ")", day.name.c_str(), static_cast<int>(hour.number),
                                              static_cast<int>(minute.number), frame.timestamp);
                         }
                      }

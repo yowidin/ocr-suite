@@ -63,7 +63,7 @@ window::window(options opts, draw_cb_t cb)
    g_instance = this;
 
    // Setup SDL
-   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
       throw_sdl_error("SDL_Init");
    }
 
@@ -75,9 +75,9 @@ window::window(options opts, draw_cb_t cb)
    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 #elif OCS_TARGET_OS(UNIX)
-   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 #endif
 

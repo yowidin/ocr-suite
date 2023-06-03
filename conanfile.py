@@ -43,10 +43,14 @@ class Recipe(ConanFile):
         # JPEG and libx264 are breaking the build on Ubuntu
         self.options['leptonica'].with_jpeg = False
         self.options['leptonica'].with_openjpeg = False
+
         self.options['libtiff'].jpeg = False
+
         self.options['ffmpeg'].with_libx264 = False
         self.options['ffmpeg'].with_libx265 = False
         self.options['ffmpeg'].with_openjpeg = False
+        self.options['ffmpeg'].with_pulse = False
+
         self.options['tesseract'].with_auto_optimize = True
         self.options['tesseract'].with_march_native = False
 
@@ -54,6 +58,9 @@ class Recipe(ConanFile):
         self.options['glad'].spec = 'gl'
         self.options['glad'].gl_profile = 'core'
         self.options['glad'].gl_version = '3.2'
+
+        # SDL settings
+        self.options['sdl'].pulse = False
 
     def layout(self):
         cmake_layout(self)

@@ -18,6 +18,7 @@ extern "C" {
 
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 namespace ocs::ffmpeg::traits {
 
