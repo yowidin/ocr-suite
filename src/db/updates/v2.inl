@@ -8,17 +8,17 @@
 
 namespace {
 
-void update_v2(db_t &db) {
+void update_v2(sqlite_burrito::versioned_database &db) {
    std::int64_t current_max = 0;
 
    // Get the maximal frame number
-   auto max_stmt = std::make_unique<db::statement>("get_max_frame_num");
-   max_stmt->prepare(db, R"sql(SELECT MAX(frame_num) FROM ocr_entries;)sql", false);
-   max_stmt->reset();
+   sqlite_burrito::statement max_stmt{db.get_connection()};
+   max_stmt.prepare(R"sql(SELECT MAX(frame_num) FROM ocr_entries;)sql");
+   max_stmt.reset();
 
-   auto code = max_stmt->evaluate();
-   if (code == SQLITE_ROW && !max_stmt->is_null(0)) {
-      current_max = max_stmt->get_int64(0);
+   auto have_value = max_stmt.step();
+   if (have_value && !max_stmt.is_null(0)) {
+      max_stmt.get(0, current_max);
    }
 
    // Add the frame number column
@@ -30,14 +30,14 @@ ADD COLUMN last_processed_frame INT DEFAULT(0);
 
 COMMIT;
 )sql";
-   ocs::db::statement::exec(db, sql);
+   sqlite_burrito::statement::execute(db.get_connection(), sql);
 
    // Update the frame number itself
    std::string update = "UPDATE metadata SET last_processed_frame=";
    update += std::to_string(current_max);
    update += ';';
 
-   ocs::db::statement::exec(db, update.c_str());
+   sqlite_burrito::statement::execute(db.get_connection(), update);
 }
 
 } // namespace

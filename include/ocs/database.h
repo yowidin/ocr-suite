@@ -2,13 +2,11 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
-#ifndef OCR_SUITE_DATABASE_H
-#define OCR_SUITE_DATABASE_H
+#pragma once
 
-#include <ocs/ocr.h>
+#include <ocs/recognition/ocr.h>
 
-#include <ocs/db/database.h>
-#include <ocs/db/statement.h>
+#include <sqlite-burrito/versioned_database.h>
 
 #include <memory>
 #include <mutex>
@@ -22,37 +20,46 @@ class database {
 private:
    static const int CURRENT_DB_VERSION;
 
-   //! Unique statement pointer type
-   using statement_ptr_t = std::unique_ptr<db::statement>;
+   using statement_t = sqlite_burrito::statement;
 
 public:
-   database(std::string db_path);
+   struct search_entry {
+      int frame_number;
+      std::string text;
+      int left, top, right, bottom;
+      float confidence;
+   };
 
 public:
-   void store(const ocr::ocr_result &result);
+   database(std::string db_path, bool read_only = false);
 
-   std::int64_t get_starting_frame_number() const;
-   bool is_frame_processed(std::int64_t frame_num) const;
+public:
+   void store(const ocs::recognition::ocr::ocr_result &result);
 
-   void store_last_frame_number(std::int64_t frame_num) const;
+   std::int64_t get_starting_frame_number();
+   bool is_frame_processed(std::int64_t frame_num);
+
+   void store_last_frame_number(std::int64_t frame_num);
+
+   void find_text(const std::string &text, std::vector<search_entry> &entries);
 
 private:
-   static void db_update(db::database &db, int from);
+   static void db_update(sqlite_burrito::versioned_database &con, int from, std::error_code &ec);
 
    void prepare_statements();
 
 private:
+   bool read_only_;
    std::string db_path_;
-   ocs::db::database db_;
+   sqlite_burrito::versioned_database db_;
 
-   statement_ptr_t add_text_entry_;
-   statement_ptr_t get_starting_frame_number_;
-   statement_ptr_t is_frame_number_present_;
-   statement_ptr_t store_last_frame_number_;
+   statement_t add_text_entry_;
+   statement_t get_starting_frame_number_;
+   statement_t is_frame_number_present_;
+   statement_t store_last_frame_number_;
+   statement_t find_text_;
 
    mutable std::recursive_mutex database_mutex_{};
 };
 
 } // namespace ocs
-
-#endif // OCR_SUITE_DATABASE_H

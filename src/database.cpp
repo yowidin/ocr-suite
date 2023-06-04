@@ -7,8 +7,7 @@
 #include <spdlog/spdlog.h>
 
 using namespace ocs;
-
-using db_t = ocs::db::database;
+using namespace ocs::recognition;
 
 // Include updates implementations. Those functions are usually very big and not that interesting, so they are
 // implemented in standalone modules
@@ -21,10 +20,19 @@ using db_t = ocs::db::database;
 #include "db/updates/update.inl"
 #undef OCS_IDL_INCLUDE
 
-database::database(std::string db_path)
-   : db_path_{std::move(db_path)}
-   , db_(db_path_) {
-   db_.init(CURRENT_DB_VERSION, &database::db_update);
+using open_flags_t = sqlite_burrito::connection::open_flags;
+using flags_t = sqlite_burrito::statement::prepare_flags;
+
+database::database(std::string db_path, bool read_only)
+   : read_only_{read_only}
+   , db_path_{std::move(db_path)}
+   , db_{read_only ? open_flags_t::readonly : open_flags_t::default_mode}
+   , add_text_entry_{db_.get_connection(), flags_t::persistent}
+   , get_starting_frame_number_{db_.get_connection(), flags_t::persistent}
+   , is_frame_number_present_{db_.get_connection(), flags_t::persistent}
+   , store_last_frame_number_{db_.get_connection(), flags_t::persistent}
+   , find_text_{db_.get_connection(), flags_t::persistent} {
+   db_.open(db_path_, CURRENT_DB_VERSION, &database::db_update);
    prepare_statements();
 }
 
@@ -43,52 +51,56 @@ void database::store(const ocr::ocr_result &result) {
    auto &stmt = add_text_entry_;
 
    try {
-      db::statement::exec(db_, "BEGIN TRANSACTION");
+      auto transaction = db_.get_connection().begin_transaction();
+
       for (auto &entry : result.entries) {
-         stmt->reset();
-         stmt->bind("pnum", result.frame_number);
-         stmt->bind("pleft", entry.left);
-         stmt->bind("ptop", entry.top);
-         stmt->bind("pright", entry.right);
-         stmt->bind("pbottom", entry.bottom);
-         stmt->bind("pconfidence", entry.confidence);
-         stmt->bind("ptext", entry.text);
-         stmt->evaluate();
+         stmt.reset();
+         stmt.bind(":pnum", result.frame_number);
+         stmt.bind(":pleft", entry.left);
+         stmt.bind(":ptop", entry.top);
+         stmt.bind(":pright", entry.right);
+         stmt.bind(":pbottom", entry.bottom);
+         stmt.bind(":pconfidence", entry.confidence);
+         stmt.bind(":ptext", entry.text);
+         stmt.execute();
       }
-      db::statement::exec(db_, "COMMIT TRANSACTION");
+
+      transaction.commit();
    } catch (const std::exception &e) {
-      SPDLOG_ERROR("Failed to store OCR result for frame {}, {}", result.frame_number, e.what());
-      db::statement::exec(db_, "ROLLBACK TRANSACTION");
+      spdlog::error("Failed to store OCR result for frame {}, {}", result.frame_number, e.what());
       throw;
    } catch (...) {
-      db::statement::exec(db_, "ROLLBACK TRANSACTION");
-      SPDLOG_ERROR("Failed to store OCR result for frame {}", result.frame_number);
+      spdlog::error("Failed to store OCR result for frame {}", result.frame_number);
       throw;
    }
 }
 
-std::int64_t database::get_starting_frame_number() const {
+std::int64_t database::get_starting_frame_number() {
    std::lock_guard lock{database_mutex_};
    auto &stmt = get_starting_frame_number_;
 
-   stmt->reset();
-   stmt->evaluate();
+   stmt.reset();
+   stmt.step();
 
-   return stmt->get_int64(0) + 1;
+   std::int64_t result;
+   stmt.get(0, result);
+   return result + 1;
 }
 
-bool database::is_frame_processed(std::int64_t frame_num) const {
+bool database::is_frame_processed(std::int64_t frame_num) {
    std::lock_guard lock{database_mutex_};
    auto &stmt = is_frame_number_present_;
 
-   stmt->reset();
-   stmt->bind("pnum", frame_num);
-   stmt->evaluate();
+   stmt.reset();
+   stmt.bind(":pnum", frame_num);
+   stmt.step();
 
-   return stmt->get_int(0) != 0;
+   bool result;
+   stmt.get(0, result);
+   return result;
 }
 
-void database::store_last_frame_number(std::int64_t frame_num) const {
+void database::store_last_frame_number(std::int64_t frame_num) {
    std::lock_guard lock{database_mutex_};
 
    static std::int64_t max_frame_number = -1;
@@ -98,31 +110,50 @@ void database::store_last_frame_number(std::int64_t frame_num) const {
 
    auto &stmt = store_last_frame_number_;
 
-   stmt->reset();
-   stmt->bind("pnum", frame_num);
-   stmt->evaluate();
+   stmt.reset();
+   stmt.bind(":pnum", frame_num);
+   stmt.execute();
 
    max_frame_number = frame_num;
 }
 
+void database::find_text(const std::string &text, std::vector<search_entry> &entries) {
+   entries.clear();
+
+   auto &stmt = find_text_;
+   stmt.reset();
+   stmt.bind(":ptext", text);
+
+   while (stmt.step()) {
+      entries.emplace_back();
+      auto &e = entries.back();
+      stmt.get(0, e.frame_number);
+      stmt.get(1, e.left);
+      stmt.get(2, e.top);
+      stmt.get(3, e.right);
+      stmt.get(4, e.bottom);
+      stmt.get(5, e.confidence);
+      stmt.get(6, e.text);
+   }
+}
+
 void database::prepare_statements() {
    // clang-format off
-   get_starting_frame_number_ = std::make_unique<db::statement>("get_starting_frame_number");
-   get_starting_frame_number_->prepare(db_, R"sql(SELECT last_processed_frame FROM metadata;)sql", true);
+   get_starting_frame_number_.prepare(R"sql(SELECT last_processed_frame FROM metadata;)sql");
 
-   add_text_entry_ = std::make_unique<db::statement>("add_text_entry");
-   add_text_entry_->prepare(db_,
-   R"sql(INSERT INTO ocr_entries("frame_num", "left", "top", "right", "bottom", "confidence", "ocr_text")
-         VALUES (:pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext);)sql",
-                           true);
+   if (!read_only_) {
+      add_text_entry_.prepare(
+R"sql(INSERT INTO ocr_entries("frame_num", "left", "top", "right", "bottom", "confidence", "ocr_text")
+      VALUES (:pnum, :pleft, :ptop, :pright, :pbottom, :pconfidence, :ptext);)sql");
 
-   is_frame_number_present_ = std::make_unique<db::statement>("is_frame_number_present");
-   is_frame_number_present_->prepare(db_,
-   R"sql(SELECT COUNT(*) FROM ocr_entries WHERE frame_num = :pnum;)sql", true);
+      store_last_frame_number_.prepare(R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql");
+   }
 
-   store_last_frame_number_ = std::make_unique<db::statement>("store_last_frame_number");
-   store_last_frame_number_->prepare(db_,
-   R"sql(UPDATE metadata SET last_processed_frame=:pnum;)sql", true);
+   is_frame_number_present_.prepare(R"sql(SELECT COUNT(*) FROM ocr_entries WHERE frame_num = :pnum;)sql");
+
+   find_text_.prepare(
+R"sql(SELECT frame_num, left, top, right, bottom, confidence, ocr_text
+      FROM ocr_entries WHERE ocr_text LIKE :ptext;)sql");
 
    // clang-format on
 }

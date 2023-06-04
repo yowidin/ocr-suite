@@ -9,16 +9,11 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
-  cancel:
-    name: Cancel
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.10.0
-        with:
-          access_token: ${{ github.token }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
   build:
     runs-on: ${{ matrix.os }}
 
@@ -27,16 +22,16 @@ jobs:
       max-parallel: 3
       matrix:
         os:
-          - windows-2022
+          # - windows-2022
+          - ubuntu-22.04
           - macos-12
-          - ubuntu-20.04
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: '3.x'
 
@@ -45,17 +40,12 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install conan
 
-      - name: Install dependencies (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run:  |
-          conan config set general.cmake_generator="Visual Studio 17 2022"
-
-      - name: Install dependencies (macOS)
-        if: startsWith(matrix.os, 'macos')
-        run:  |
-          brew update
-          brew install ninja
-          conan config set general.cmake_generator="Ninja"
+      - name: Configure conan
+        run: |
+          conan --version
+          conan profile detect
+          conan config install ./profiles
+          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
 
       - name: Install dependencies (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
@@ -68,8 +58,8 @@ jobs:
                libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev libxcb-render0-dev \
                libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
                libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev \
-               libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-util0-dev
-          conan config set general.cmake_generator="Ninja"
+               libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-util0-dev libxcb-cursor-dev \
+               mesa-common-dev libegl-dev 
 
       - name: Build
         run:  |

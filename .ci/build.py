@@ -15,25 +15,23 @@ def do_run(*args, **kwargs):
 
 def main():
     parser = ArgumentParser('Project builder')
-    parser.add_argument('--preset', '-p', default='release', help='Build preset')
 
     args = parser.parse_args()
 
     source_dir = os.getcwd()
-    build_dir = os.path.join(source_dir, 'build', args.preset)
+    build_dir = os.path.join(source_dir, 'build', 'release')
 
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
 
-    install_args = ['conan', 'install', source_dir, '-of', build_dir, '-b', 'missing', '-s', 'compiler.cppstd=17', '-s',
-                    'build_type=Release']
+    build_args = ['conan', 'build', '-b', 'missing', '-s', 'compiler.cppstd=17', '-s', 'build_type=Release',
+                  '-c:h', 'tools.cmake.cmake_layout:build_folder_vars=["settings.build_type"]', source_dir]
     if platform == 'darwin':
         # Build for High Sierra
-        install_args.extend(['-s', 'os.version=10.13'])
+        build_args.extend(['-s', 'os.version=10.13'])
 
     extra_kw = {'cwd': build_dir, 'check': True}
-    do_run(install_args, **extra_kw)
-    do_run(['conan', 'build', source_dir], **extra_kw)
+    do_run(build_args, **extra_kw)
     do_run(['cpack', '-G', 'ZIP'], **extra_kw)
 
 

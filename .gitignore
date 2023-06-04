@@ -1,5 +1,7 @@
 compile_commands.json
 
+CMakeUserPresets.json
+
 .DS_Store
 .venv
 .cache

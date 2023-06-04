@@ -1,0 +1,14 @@
+#ifndef OCS_CONFIG_H_
+#define OCS_CONFIG_H_
+
+#cmakedefine01 OCS_WINDOWS()
+#cmakedefine01 OCS_APPLE()
+#cmakedefine01 OCS_UNIX()
+
+// https://www.fluentcpp.com/2019/05/28/better-macros-better-flags/
+#define OCS_TARGET_OS(X) OCS_TARGET_OS_PRIVATE_DEFINITION_##X()
+#define OCS_TARGET_OS_PRIVATE_DEFINITION_WINDOWS() OCS_WINDOWS()
+#define OCS_TARGET_OS_PRIVATE_DEFINITION_APPLE() OCS_APPLE()
+#define OCS_TARGET_OS_PRIVATE_DEFINITION_UNIX() OCS_UNIX()
+
+#endif // OCS_CONFIG_H_
