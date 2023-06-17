@@ -3,7 +3,6 @@
 //
 
 #include <ocs/recognition/options.h>
-#include <ocs/recognition/video.h>
 
 #include <ocs/ffmpeg/decoder.h>
 

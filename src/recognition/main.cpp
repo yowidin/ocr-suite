@@ -1,8 +1,12 @@
 #include <ocs/config.h>
-#include <ocs/database.h>
+
+#include <ocs/common/database.h>
+
 #include <ocs/recognition/bmp.h>
+#include <ocs/recognition/ocr.h>
 #include <ocs/recognition/options.h>
 #include <ocs/recognition/speed_meter.h>
+#include <ocs/common/video.h>
 
 #include <cstdlib>
 #include <exception>
@@ -21,6 +25,7 @@
 #endif
 
 using namespace ocs::recognition;
+using namespace ocs::common;
 
 void adjust_thread_priority(std::thread::native_handle_type handle) {
 #if OCS_TARGET_OS(APPLE) || OCS_TARGET_OS(UNIX)
@@ -48,13 +53,15 @@ int main(int argc, const char **argv) {
 
    const auto options = pres.value();
 
-   ocs::database db{options.database_file};
+   database db{options.database_file};
    auto queue = std::make_shared<video::queue_t>(options.ocr_threads * 2);
 
    /// --- Setup the progress reporters ---
 
    const auto starting_frame_number = db.get_starting_frame_number();
-   video video_file{options, queue, starting_frame_number};
+   ocs::common::video video_file{options.video_file,
+                                 static_cast<ocs::ffmpeg::decoder::frame_filter>(options.frame_filter), queue,
+                                 starting_frame_number};
 
    std::string postfix = "Processing ...";
 
@@ -128,7 +135,7 @@ int main(int argc, const char **argv) {
    /// --- Start the work ---
    auto consumer_func = [&]() {
       try {
-         auto ocr_callback = [&](const ocr::ocr_result &result) {
+         auto ocr_callback = [&](const ocr_result &result) {
             meter.add_ocr_frame(result.frame_number);
             spinner.set_progress(result.frame_number);
             db.store(result);
@@ -143,7 +150,7 @@ int main(int argc, const char **argv) {
             return !processed;
          };
 
-         ocs::recognition::ocr ocr{options, ocr_callback};
+         ocr ocr{options, ocr_callback};
          ocr.start(queue, filter_callback);
       } catch (const std::exception &ex) {
          spdlog::error("Consumer thread exception: {}", ex.what());

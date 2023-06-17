@@ -49,7 +49,7 @@ class Recipe(ConanFile):
         self.options['ffmpeg'].with_libx264 = False
         self.options['ffmpeg'].with_libx265 = False
         self.options['ffmpeg'].with_openjpeg = False
-        self.options['ffmpeg'].with_pulse = False
+
 
         self.options['tesseract'].with_auto_optimize = True
         self.options['tesseract'].with_march_native = False
@@ -59,8 +59,10 @@ class Recipe(ConanFile):
         self.options['glad'].gl_profile = 'core'
         self.options['glad'].gl_version = '3.2'
 
-        # SDL settings
-        self.options['sdl'].pulse = False
+        # Turn off the Pulse Audio support for non-windows OSs
+        if self.settings.os != 'Windows':
+            self.options['ffmpeg'].with_pulse = False
+            self.options['sdl'].pulse = False
 
         if self.settings.os == 'Macos':
             self.options['boost'].with_stacktrace_backtrace = False

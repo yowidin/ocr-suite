@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <string>
 
-namespace ocs::util {
+namespace ocs::common::util {
 
 // trim from start (in place)
 inline void ltrim(std::string &s) {

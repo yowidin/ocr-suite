@@ -41,7 +41,7 @@ void search_results_view::sort_results() {
       using namespace boost::posix_time;
 
       const ptime time_t_epoch(date(1970, 1, 1));
-      const auto as_posix = time_t_epoch + milliseconds(ts.count());
+      const auto as_posix = time_t_epoch + boost::posix_time::milliseconds(ts.count());
       return as_posix;
    };
 
@@ -121,16 +121,15 @@ void search_results_view::sort_results() {
          current_frame->owner_idx = current_minute->frames.size() - 1;
       }
 
-      text text_entry = {
-          .left = entry.left,
-          .top = entry.top,
-          .right = entry.right,
-          .bottom = entry.bottom,
-          .confidence = entry.confidence,
-          .text = entry.text,
-          .owner = current_frame,
-          .owner_idx = current_frame->texts.size(),
-      };
+      text text_entry;
+      text_entry.left = entry.left;
+      text_entry.top = entry.top;
+      text_entry.right = entry.right;
+      text_entry.bottom = entry.bottom;
+      text_entry.confidence = entry.confidence;
+      text_entry.value = entry.text;
+      text_entry.owner = current_frame;
+      text_entry.owner_idx = current_frame->texts.size();
 
       current_frame->texts.emplace_back(std::move(text_entry));
 
@@ -183,8 +182,9 @@ void search_results_view::draw() {
                         }
 
                         if (ImGui::IsItemHovered()) {
-                           ImGui::SetTooltip("%s %.02d:%02d (%" PRIi64 ")", day.name.c_str(), static_cast<int>(hour.number),
-                                             static_cast<int>(minute.number), frame.timestamp);
+                           ImGui::SetTooltip("%s %.02d:%02d (%" PRIi64 ")", day.name.c_str(),
+                                             static_cast<int>(hour.number), static_cast<int>(minute.number),
+                                             frame.timestamp);
                         }
                      }
                      ImGui::TreePop();

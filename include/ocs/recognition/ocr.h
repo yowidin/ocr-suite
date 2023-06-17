@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <ocs/common/ocr_result.h>
+
 #include <ocs/recognition/options.h>
-#include <ocs/recognition/video.h>
+#include <ocs/common/video.h>
 
 #include <functional>
 #include <string>
@@ -17,22 +19,11 @@ namespace ocs::recognition {
 
 class ocr {
 public:
-   using value_queue_t = video::queue_t;
-   using value_queue_ptr_t = video::queue_ptr_t;
+   using value_queue_t = common::video::queue_t;
+   using value_queue_ptr_t = common::video::queue_ptr_t;
    using frame_t = value_queue_t::value_ptr_t;
 
-   struct text_entry {
-      int left, top, right, bottom;
-      float confidence;
-      std::string text;
-   };
-
-   struct ocr_result {
-      std::int64_t frame_number{};
-      std::vector<text_entry> entries{};
-   };
-
-   using ocr_result_cb_t = std::function<void(const ocr_result &)>;
+   using ocr_result_cb_t = std::function<void(const common::ocr_result &)>;
    using ocr_filter_cb_t = std::function<bool(std::int64_t)>;
 
 public:

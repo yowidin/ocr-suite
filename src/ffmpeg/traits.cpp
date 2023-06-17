@@ -3,7 +3,7 @@
 //
 
 #include <ocs/ffmpeg/traits.h>
-#include <ocs/util.h>
+#include <ocs/common/util.h>
 
 #include <spdlog/spdlog.h>
 
@@ -53,7 +53,7 @@ void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
    std::string msg(required, ' ');
    std::vsnprintf(msg.data(), msg.size(), fmt, vl);
    msg.resize(msg.size() - 1); // Remove the trailing null character
-   ocs::util::trim(msg);
+   ocs::common::util::trim(msg);
 
    if (avc) {
       spdlog::log(lvl, "[{}] {}", avc->class_name, msg);

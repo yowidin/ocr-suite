@@ -6,9 +6,9 @@
 #error Internal use only
 #endif
 
-const int ocs::database::CURRENT_DB_VERSION = 3;
+const int ocs::common::database::CURRENT_DB_VERSION = 3;
 
-void ocs::database::db_update(sqlite_burrito::versioned_database &db, int from, std::error_code &ec) {
+void ocs::common::database::db_update(sqlite_burrito::versioned_database &db, int from, std::error_code &ec) {
    spdlog::trace("Updating database: from version {}", from);
 
    switch (from) {

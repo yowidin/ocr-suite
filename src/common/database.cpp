@@ -2,12 +2,11 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
-#include <ocs/database.h>
+#include <ocs/common/database.h>
 
 #include <spdlog/spdlog.h>
 
-using namespace ocs;
-using namespace ocs::recognition;
+using namespace ocs::common;
 
 // Include updates implementations. Those functions are usually very big and not that interesting, so they are
 // implemented in standalone modules
@@ -36,7 +35,7 @@ database::database(std::string db_path, bool read_only)
    prepare_statements();
 }
 
-void database::store(const ocr::ocr_result &result) {
+void database::store(const common::ocr_result &result) {
    store_last_frame_number(result.frame_number);
    if (result.entries.empty()) {
       return;
