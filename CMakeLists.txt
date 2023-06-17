@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(ocr_suite VERSION 0.1.0 LANGUAGES CXX)
+project(ocr_suite VERSION 0.2.0 LANGUAGES CXX)
 
 #################################################################################
 ### Setup platform-specific flags
@@ -26,31 +26,20 @@ configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
 
 ################################################################################
 ### Dependencies
-find_package(Tesseract CONFIG REQUIRED)
 find_package(ffmpeg CONFIG REQUIRED)
-find_package(PNG CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(lyra CONFIG REQUIRED)
-find_package(SQLiteBurrito CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
-set(
-   common_libs
-
-   Tesseract::libtesseract ffmpeg::ffmpeg PNG::PNG
-   spdlog::spdlog bfg::lyra SQLiteBurrito::library
-   Boost::filesystem Boost::date_time
-)
 
 ################################################################################
 ### FFMPEG helper
-add_library(
-   ffmpeg_helper STATIC
-
+add_library(ffmpeg_helper STATIC
    src/ffmpeg/decoder.cpp
    src/ffmpeg/traits.cpp
 )
 
-target_link_libraries(ffmpeg_helper PUBLIC ${common_libs})
+target_link_libraries(ffmpeg_helper
+   PUBLIC
+      ffmpeg::ffmpeg spdlog::spdlog
+)
 
 target_include_directories(
    ffmpeg_helper
@@ -71,29 +60,32 @@ set_target_properties(
 
 ################################################################################
 ### Library
+find_package(SQLiteBurrito CONFIG REQUIRED)
+
 add_library(
-   ocr_lib STATIC
+   ocr_common STATIC
 
-   src/recognition/video.cpp
-   src/recognition/bmp.cpp
-   src/recognition/ocr.cpp
-
-   src/database.cpp
+   src/common/database.cpp
+   src/common/video.cpp
 )
 
-target_link_libraries(ocr_lib PUBLIC ${common_libs} ffmpeg_helper)
+target_link_libraries(ocr_common
+   PUBLIC
+      ffmpeg_helper
+      spdlog::spdlog SQLiteBurrito::library
+)
 
 target_include_directories(
-   ocr_lib
+   ocr_common
 
    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
    PUBLIC $<BUILD_INTERFACE:${OCS_GENERATED_INCLUDE_DIR}>
 )
 
 set_target_properties(
-   ocr_lib PROPERTIES
+   ocr_common PROPERTIES
 
-   OUTPUT_NAME ocr-lib
+   OUTPUT_NAME ocr-common
 
    CXX_STANDARD 17
    CXX_STANDARD_REQUIRED YES
@@ -102,18 +94,30 @@ set_target_properties(
 
 ################################################################################
 ### Main Tool
+find_package(PNG CONFIG REQUIRED)
+find_package(Tesseract CONFIG REQUIRED)
+find_package(lyra CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
 find_package(indicators CONFIG REQUIRED)
-set(main_libs indicators::indicators)
 
 add_executable(
    ocr_suite
 
-   src/recognition/main.cpp
+   src/recognition/bmp.cpp
+   src/recognition/ocr.cpp
+
    src/recognition/speed_meter.cpp
    src/recognition/options.cpp
+
+   src/recognition/main.cpp
 )
 
-target_link_libraries(ocr_suite PRIVATE ocr_lib ${main_libs})
+target_link_libraries(ocr_suite
+   PRIVATE
+      ocr_common
+      indicators::indicators Tesseract::libtesseract bfg::lyra
+      Boost::filesystem
+)
 
 set_target_properties(
    ocr_suite PROPERTIES
@@ -145,7 +149,6 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
-set(ui_libs SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL)
 
 add_executable(
    ocr_suite_viewer
@@ -176,7 +179,12 @@ add_executable(
    ${CMAKE_CURRENT_BINARY_DIR}/bindings/imgui_impl_sdl.cpp
 )
 
-target_link_libraries(ocr_suite_viewer PRIVATE ocr_lib ${ui_libs})
+target_link_libraries(ocr_suite_viewer
+   PRIVATE
+      ocr_common
+      SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL
+      Boost::date_time Boost::filesystem bfg::lyra
+)
 
 target_include_directories(
    ocr_suite_viewer PUBLIC

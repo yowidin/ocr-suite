@@ -8,6 +8,8 @@
 #include <spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
 
+#include <algorithm>
+
 using namespace ocs::viewer;
 
 namespace fs = boost::filesystem;
@@ -75,7 +77,7 @@ void search::thread::add_file(const database_file &file) {
 
 void search::thread::work_once() {
    for (const auto &f : files_) {
-      ocs::database db(f.database_path, true);
+      ocs::common::database db(f.database_path, true);
       db.find_text(search_text_, current_entries_);
       db_->decrement_remaining_size(f, current_entries_);
    }
@@ -152,7 +154,7 @@ void search::collect_files() {
       threads_[idx]->add_file(entry);
    }
 
-   spdlog::debug("{} database files found", video_files_.size());
+   spdlog::debug("{} video and {} database files found", video_files_.size(), database_files_.size());
 }
 
 void search::find_text(const std::string &text) {

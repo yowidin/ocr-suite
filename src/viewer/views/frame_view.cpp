@@ -377,7 +377,7 @@ void frame_view::draw() {
       const bool in_horizontal = (local_mouse_pos.x >= entry.left && local_mouse_pos.x <= entry.right);
       const bool in_vertical = (local_mouse_pos.y >= entry.top && local_mouse_pos.y <= entry.bottom);
       if (in_horizontal && in_vertical) {
-         ImGui::SetTooltip("%s: %.2f", entry.text.c_str(), entry.confidence);
+         ImGui::SetTooltip("%s: %.2f", entry.value.c_str(), entry.confidence);
       }
 
       draw_list->AddRect(ImVec2(left, top), ImVec2(right, bottom), color, 0.1, 0, line_width);

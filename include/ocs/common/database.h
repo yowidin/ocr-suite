@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <ocs/recognition/ocr.h>
+#include <ocs/common/ocr_result.h>
 
 #include <sqlite-burrito/versioned_database.h>
 
@@ -13,7 +13,7 @@
 
 struct sqlite3;
 
-namespace ocs {
+namespace ocs::common {
 
 //! A class for storing the results of the OCR process in a sqlite3 database.
 class database {
@@ -34,7 +34,7 @@ public:
    database(std::string db_path, bool read_only = false);
 
 public:
-   void store(const ocs::recognition::ocr::ocr_result &result);
+   void store(const ocr_result &result);
 
    std::int64_t get_starting_frame_number();
    bool is_frame_processed(std::int64_t frame_num);

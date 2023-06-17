@@ -16,7 +16,8 @@ viewer::viewer(options opts)
    , frame_view_{search_results_view_}
    , search_results_{opts_.in_memory_results}
    , search_results_view_{db_, frame_view_} {
-   window::options win_opts = {.title = "OCS Viewer"};
+   window::options win_opts = {};
+   win_opts.title = "OCS Viewer";
    window_ = std::make_unique<window>(win_opts, [this]() { draw(); });
 
    db_.collect_files();

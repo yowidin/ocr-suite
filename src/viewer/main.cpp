@@ -14,7 +14,7 @@ using namespace ocs::viewer::render;
 using namespace ocs::viewer::views;
 using namespace ocs::viewer;
 
-int main_checked(int argc, const char **const argv) {
+int main_checked(int argc, const char **argv) {
    auto pres = options::parse(argc, argv);
    if (!pres) {
       return EXIT_FAILURE;
@@ -26,12 +26,13 @@ int main_checked(int argc, const char **const argv) {
    return EXIT_SUCCESS;
 }
 
-int main(int argc, const char **const argv) {
+int main(int argc, char **argv) {
    try {
       spdlog::set_level(spdlog::level::debug);
       spdlog::set_pattern("[%^%L%$][%t] %v");
 
-      return main_checked(argc, argv);
+	  // srsly msvc, const cast?
+      return main_checked(argc, const_cast<const char **>(argv));
    } catch (const std::exception &e) {
       std::cerr << "Error: " << e.what() << std::endl;
       return EXIT_FAILURE;

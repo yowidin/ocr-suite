@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-namespace ocs::recognition {
+namespace ocs::common {
 
 /**
  * Holds a limited list of value pointers, allowing a single producer to generate values and multiple consumers to
@@ -166,4 +166,4 @@ std::size_t value_queue<T>::get_remaining_consumer_values() const {
    return consumer_values_.size();
 }
 
-} // namespace ocs::recognition
+} // namespace ocs::common

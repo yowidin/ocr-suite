@@ -5,7 +5,7 @@
 #ifndef OCR_SUITE_VIEWER_SEARCH_H
 #define OCR_SUITE_VIEWER_SEARCH_H
 
-#include <ocs/database.h>
+#include <ocs/common/database.h>
 #include <ocs/viewer/options.h>
 
 #include <condition_variable>
@@ -21,7 +21,7 @@ class results;
 
 class search {
 public:
-   using db_entries_t = std::vector<ocs::database::search_entry>;
+   using db_entries_t = std::vector<ocs::common::database::search_entry>;
 
    struct search_entry {
       std::string video_file_path;

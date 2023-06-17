@@ -2,20 +2,22 @@
 // Created by Dennis Sitelew on 18.12.22.
 //
 
-#include <ocs/recognition/video.h>
-#include <ocs/util.h>
+#include <ocs/common/util.h>
+#include <ocs/common/video.h>
 
 #include <spdlog/spdlog.h>
 
-using namespace ocs::recognition;
+using namespace ocs::common;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Class: video
 ////////////////////////////////////////////////////////////////////////////////
-video::video(const options &opts, queue_ptr_t queue, std::int64_t starting_frame)
+video::video(const std::string &path,
+             ffmpeg::decoder::frame_filter filter,
+             queue_ptr_t queue,
+             std::int64_t starting_frame)
    : queue_{std::move(queue)}
-   , decoder_{opts.video_file, static_cast<ffmpeg::decoder::frame_filter>(opts.frame_filter),
-              [this](const auto &frame, auto num) { return on_frame(frame, num); }, starting_frame} {
+   , decoder_{path, filter, [this](const auto &frame, auto num) { return on_frame(frame, num); }, starting_frame} {
    // Nothing to do here
 }
 

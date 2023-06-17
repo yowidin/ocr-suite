@@ -24,7 +24,7 @@ public:
    struct text {
       int left, top, right, bottom;
       float confidence;
-      std::string text;
+      std::string value;
 
       frame *owner;
       std::size_t owner_idx;

@@ -2,7 +2,7 @@
 // Created by Dennis Sitelew on 06.03.23.
 //
 
-#include <ocs/recognition/video.h>
+#include <ocs/common/video.h>
 #include <ocs/viewer/results.h>
 
 #include <spdlog/spdlog.h>
@@ -39,8 +39,7 @@ results::results(bool in_memory)
 void results::store(const search::search_entry &result) {
    using namespace std::chrono;
 
-   ocs::recognition::options opts{.video_file = result.video_file_path};
-   ocs::recognition::video video{opts, {nullptr}};
+   ocs::common::video video{result.video_file_path, ffmpeg::decoder::frame_filter::all_frames, {nullptr}};
 
    const auto start_time = start_time_for_video(result.video_file_path);
 

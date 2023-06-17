@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <ocs/recognition/options.h>
-#include <ocs/recognition/value_queue.h>
+#include <ocs/common/value_queue.h>
 
 #include <ocs/ffmpeg/decoder.h>
 
@@ -15,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace ocs::recognition {
+namespace ocs::common {
 
 //! Class for getting frames from a video file, using the ffmpeg library.
 class video {
@@ -24,7 +23,10 @@ public:
    using queue_ptr_t = std::shared_ptr<queue_t>;
 
 public:
-   video(const options &opts, queue_ptr_t queue, std::int64_t starting_frame = 0);
+   video(const std::string &path,
+         ffmpeg::decoder::frame_filter filter,
+         queue_ptr_t queue,
+         std::int64_t starting_frame = 0);
 
 public:
    void start();
@@ -42,4 +44,4 @@ private:
    ffmpeg::decoder decoder_;
 };
 
-} // namespace ocs::recognition
+} // namespace ocs::common

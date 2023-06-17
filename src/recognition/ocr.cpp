@@ -4,7 +4,8 @@
 
 #include <ocs/recognition/bmp.h>
 #include <ocs/recognition/ocr.h>
-#include <ocs/util.h>
+
+#include <ocs/common/util.h>
 
 #include <functional>
 
@@ -90,11 +91,11 @@ void ocr::do_ocr(const frame_t &frame) {
       return;
    }
 
-   ocr_result result{};
+   common::ocr_result result{};
    result.frame_number = frame->frame_number;
 
    for (it->Begin(); it->Next(tesseract::RIL_WORD);) {
-      text_entry entry{};
+      common::text_entry entry{};
 
       if (!it->BoundingBox(tesseract::RIL_WORD, &entry.left, &entry.top, &entry.right, &entry.bottom)) {
          continue;
@@ -106,7 +107,7 @@ void ocr::do_ocr(const frame_t &frame) {
       entry.text = std::string(text);
       delete[] text;
 
-      util::trim(entry.text);
+      common::util::trim(entry.text);
 
       if (entry.text.size() < min_letters_threshold_) {
          continue;
