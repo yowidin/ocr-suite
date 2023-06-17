@@ -22,7 +22,7 @@ jobs:
       max-parallel: 3
       matrix:
         os:
-          # - windows-2022
+          - windows-2022
           - ubuntu-22.04
           - macos-12
 
@@ -38,7 +38,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install conan
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+        run: |
           pip install conan
+
+      - name: Install conan (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          pip install conan==1.60.1
 
       - name: Configure conan
         run: |
@@ -62,14 +71,33 @@ jobs:
                mesa-common-dev libegl-dev 
 
       - name: Build
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         run:  |
           python .ci/build.py
 
+      - name: Build (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run:  |
+          mkdir build
+          cd build
+          conan install -b missing -s compiler.cppstd=17 -s build_type=Release  ..
+          conan build ..
+          cpack -G ZIP
+
       - name: Upload artifact
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         uses: actions/upload-artifact@v2
         with:
           name: ocr-suite-${{ matrix.os }}
           path: ${{ github.workspace }}/build/release/ocr-suite-*.zip
+          if-no-files-found: error
+
+      - name: Upload artifact (Windows)
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ocr-suite-${{ matrix.os }}
+          path: ${{ github.workspace }}/build/ocr-suite-*.zip
           if-no-files-found: error
 
 

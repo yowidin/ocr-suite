@@ -9,7 +9,7 @@ import os
 
 class Recipe(ConanFile):
     name = 'ocr-suite'
-    version = '0.1.0'
+    version = '0.2.0'
 
     description = 'OCR Suite'
     settings = 'os', 'arch', 'compiler', 'build_type'
