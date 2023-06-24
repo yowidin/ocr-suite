@@ -1,3 +1,4 @@
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_NAME "ocr-suite")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 include(CPack)

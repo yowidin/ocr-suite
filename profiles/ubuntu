@@ -1,9 +1,0 @@
-include(default)
-
-
-[options]
-glad/*:spec=gl
-glad/*:gl_profile=core
-glad/*:gles2_version=3.2
-
-sdl*:pulse=False

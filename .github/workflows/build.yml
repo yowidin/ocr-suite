@@ -14,17 +14,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        os:
-          - windows-2022
-          - ubuntu-22.04
-          - macos-12
+  ################################################################################
+  # Build macOS
+  ################################################################################
+  build_macos:
+    runs-on: macos-12
 
     steps:
       - name: Checkout code
@@ -38,16 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-
-      - name: Install conan
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: |
           pip install conan
-
-      - name: Install conan (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          pip install conan==1.60.1
 
       - name: Configure conan
         run: |
@@ -55,9 +40,64 @@ jobs:
           conan profile detect
           conan config install ./profiles
           conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
+          conan remote login conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
 
-      - name: Install dependencies (Ubuntu)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Build x86
+        run:  |
+          conan build -b missing -s compiler.cppstd=17 -s build_type=Release \
+            -c:h tools.cmake.cmake_layout:build_folder_vars='["settings.arch"]' \
+            -s os.version=10.13 -s:h arch=x86_64 .
+          cd build/x86_64/Release
+          cpack -G ZIP
+
+      - name: Build ARM
+        run:  |
+          conan build -b missing -s compiler.cppstd=17 -s build_type=Release \
+            -c:h tools.cmake.cmake_layout:build_folder_vars='["settings.arch"]' \
+            -s os.version=11.0 -s:h arch=armv8 .
+          cd build/armv8/Release
+          cpack -G ZIP
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ocr-suite-macos
+          path: ${{ github.workspace }}/build/**/ocr-suite-*.zip
+          if-no-files-found: error
+
+      - name: Upload conan packages
+        run: |
+          conan upload -r=conan-burrito '*:*' -c
+
+  ################################################################################
+  # Build Ubuntu
+  ################################################################################
+  build_ubuntu:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install conan
+
+      - name: Configure conan
+        run: |
+          conan --version
+          conan profile detect
+          conan config install ./profiles
+          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
+          conan remote login conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+
+      - name: Install dependencies
         run:  |
           sudo apt-get update
           sudo apt-get install -y ninja-build pkg-config wget libva-dev libvdpau-dev libx11-xcb-dev \
@@ -71,12 +111,51 @@ jobs:
                mesa-common-dev libegl-dev 
 
       - name: Build
-        if: ${{ !startsWith(matrix.os, 'windows') }}
         run:  |
-          python .ci/build.py
+          conan build -b missing -s compiler.cppstd=17 -s build_type=Release .
+          cd build/Release
+          cpack -G ZIP
 
-      - name: Build (Windows)
-        if: startsWith(matrix.os, 'windows')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ocr-suite-ubuntu
+          path: ${{ github.workspace }}/build/Release/ocr-suite-*.zip
+          if-no-files-found: error
+
+      - name: Upload conan packages
+        run: |
+          conan upload -r=conan-burrito '*:*' -c
+
+  ################################################################################
+  # Build Windows
+  ################################################################################
+  build_windows:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install conan==1.60.1
+
+      - name: Configure conan
+        run: |
+          conan --version
+          conan profile detect
+          conan config install ./profiles
+          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
+          conan user -r conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+
+      - name: Build
         run:  |
           mkdir build
           cd build
@@ -85,26 +164,26 @@ jobs:
           cpack -G ZIP
 
       - name: Upload artifact
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: ocr-suite-${{ matrix.os }}
-          path: ${{ github.workspace }}/build/release/ocr-suite-*.zip
-          if-no-files-found: error
-
-      - name: Upload artifact (Windows)
-        if: ${{ startsWith(matrix.os, 'windows') }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: ocr-suite-${{ matrix.os }}
+          name: ocr-suite-windows
           path: ${{ github.workspace }}/build/ocr-suite-*.zip
           if-no-files-found: error
 
+      # On Windows uploading does nothing: uploaded packages are just ignored
+      # - name: Upload conan packages
+      #   run: |
+      #     conan upload -r=conan-burrito -c --all *
 
+  ################################################################################
+  # Deploy
+  ################################################################################
   deploy:
     if: startsWith(github.ref, 'refs/tags/')
     needs:
-      - build
+      - build_macos
+      - build_ubuntu
+      - build_windows
     runs-on: ubuntu-latest
     steps:
       - name: Download all build artifacts
