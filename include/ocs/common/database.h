@@ -54,9 +54,14 @@ private:
    sqlite_burrito::versioned_database db_;
 
    statement_t add_text_entry_;
+   statement_t get_text_entry_id_;
+   statement_t add_text_instance_;
+
    statement_t get_starting_frame_number_;
    statement_t is_frame_number_present_;
+
    statement_t store_last_frame_number_;
+
    statement_t find_text_;
 
    mutable std::recursive_mutex database_mutex_{};

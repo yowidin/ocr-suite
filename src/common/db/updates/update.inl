@@ -6,7 +6,7 @@
 #error Internal use only
 #endif
 
-const int ocs::common::database::CURRENT_DB_VERSION = 3;
+const int ocs::common::database::CURRENT_DB_VERSION = 4;
 
 void ocs::common::database::db_update(sqlite_burrito::versioned_database &db, int from, std::error_code &ec) {
    spdlog::trace("Updating database: from version {}", from);
@@ -20,6 +20,9 @@ void ocs::common::database::db_update(sqlite_burrito::versioned_database &db, in
 
       case 2:
          return update_v2(db);
+
+      case 3:
+         return update_v3(db);
 
       default:
          ec = std::make_error_code(std::errc::invalid_argument);

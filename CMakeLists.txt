@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(ocr_suite VERSION 0.2.0 LANGUAGES CXX)
+project(ocr_suite VERSION 0.3.0 LANGUAGES CXX)
 
 #################################################################################
 ### Setup platform-specific flags
@@ -28,6 +28,7 @@ configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
 ### Dependencies
 find_package(ffmpeg CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(indicators CONFIG REQUIRED)
 
 ################################################################################
 ### FFMPEG helper
@@ -72,7 +73,7 @@ add_library(
 target_link_libraries(ocr_common
    PUBLIC
       ffmpeg_helper
-      spdlog::spdlog SQLiteBurrito::library
+      spdlog::spdlog SQLiteBurrito::library indicators::indicators
 )
 
 target_include_directories(
@@ -98,7 +99,6 @@ find_package(PNG CONFIG REQUIRED)
 find_package(Tesseract CONFIG REQUIRED)
 find_package(lyra CONFIG REQUIRED)
 find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
-find_package(indicators CONFIG REQUIRED)
 
 add_executable(
    ocr_suite
@@ -115,7 +115,7 @@ add_executable(
 target_link_libraries(ocr_suite
    PRIVATE
       ocr_common
-      indicators::indicators Tesseract::libtesseract bfg::lyra
+      Tesseract::libtesseract bfg::lyra
       Boost::filesystem
 )
 
