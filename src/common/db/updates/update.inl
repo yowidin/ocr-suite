@@ -13,16 +13,16 @@ void ocs::common::database::db_update(sqlite_burrito::versioned_database &db, in
 
    switch (from) {
       case 0:
-         return update_v0(db);
+         return update_v0(db, ec);
 
       case 1:
-         return update_v1(db);
+         return update_v1(db, ec);
 
       case 2:
-         return update_v2(db);
+         return update_v2(db, ec);
 
       case 3:
-         return update_v3(db);
+         return update_v3(db, ec);
 
       default:
          ec = std::make_error_code(std::errc::invalid_argument);

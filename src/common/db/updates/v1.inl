@@ -8,7 +8,7 @@
 
 namespace {
 
-void update_v1(sqlite_burrito::versioned_database &db) {
+void update_v1(sqlite_burrito::versioned_database &db, std::error_code &ec) {
    auto sql = R"sql(
 BEGIN TRANSACTION;
 
@@ -17,7 +17,7 @@ CREATE INDEX frame_text_idx ON ocr_entries(ocr_text);
 
 COMMIT;
 )sql";
-   sqlite_burrito::statement::execute(db.get_connection(), sql);
+   sqlite_burrito::statement::execute(db.get_connection(), sql, ec);
 }
 
 } // namespace

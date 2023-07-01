@@ -124,7 +124,7 @@ CREATE INDEX text_instances_frame_num_idx ON text_instances(frame_num);
    }
 }
 
-void update_v3(sqlite_burrito::versioned_database &db) {
+void update_v3(sqlite_burrito::versioned_database &db, std::error_code &ec) {
    // Migrate to a more compact layout
 
    try {
@@ -143,12 +143,12 @@ void update_v3(sqlite_burrito::versioned_database &db) {
       sqlite_burrito::statement::execute(db.get_connection(), "VACUUM;");
 
       spdlog::info("Migration done!");
-   } catch (const std::exception &e) {
+   } catch (const std::system_error &e) {
       spdlog::error("Database upgrade failed: {}", e.what());
-      throw;
+      ec = e.code();
    } catch (...) {
       spdlog::error("Database upgrade failed");
-      throw;
+      ec = std::make_error_code(std::errc::bad_message);
    }
 }
 
