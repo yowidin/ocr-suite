@@ -77,8 +77,14 @@ void search::thread::add_file(const database_file &file) {
 
 void search::thread::work_once() {
    for (const auto &f : files_) {
-      ocs::common::database db(f.database_path, true);
-      db.find_text(search_text_, current_entries_);
+      try {
+         ocs::common::database db(f.database_path, true);
+         db.find_text(search_text_, current_entries_);
+      } catch (const std::exception &e) {
+         spdlog::error("Error searching {}: {}", f.database_path, e.what());
+      } catch (...) {
+         spdlog::error("Error searching {}: {}", f.database_path);
+      }
       db_->decrement_remaining_size(f, current_entries_);
    }
 }

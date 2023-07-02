@@ -8,7 +8,7 @@
 
 namespace {
 
-void update_v0(sqlite_burrito::versioned_database &db) {
+void update_v0(sqlite_burrito::versioned_database &db, std::error_code &ec) {
    auto sql = R"sql(
 BEGIN TRANSACTION;
 
@@ -28,7 +28,7 @@ CREATE TABLE ocr_entries (
 
 COMMIT;
 )sql";
-   sqlite_burrito::statement::execute(db.get_connection(), sql);
+   sqlite_burrito::statement::execute(db.get_connection(), sql, ec);
 }
 
 } // namespace
