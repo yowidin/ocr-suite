@@ -131,7 +131,7 @@ std::chrono::milliseconds results::start_time_for_video(const std::string &video
    using namespace boost::local_time;
    using namespace boost::posix_time;
 
-   const auto base_name = fs::basename(video_file);
+   const auto base_name = fs::path(video_file).stem().string();
 
    const auto time_format = "%Y-%m-%d %H-%M-%S";
    auto time_input_facet = new local_time_input_facet(time_format);

@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <algorithm>
 
@@ -132,11 +133,12 @@ void search::collect_files() {
 
          if (extension == options_.db_extension) {
             auto as_string = path.string();
-            spdlog::trace("Found database file: {}", as_string);
+            spdlog::trace("Found a database file: {}", as_string);
             database_files_.emplace_back(as_string);
 
             auto size = fs::file_size(path);
-            const auto video_path = fs::change_extension(path, options_.video_extension);
+            auto video_path = path;
+            video_path.replace_extension(options_.video_extension);
 
             search_files.push_back({as_string, video_path.string(), size});
             total_size_ += size;
@@ -144,7 +146,7 @@ void search::collect_files() {
 
          if (extension == options_.video_extension) {
             auto as_string = path.string();
-            spdlog::trace("Found video file: {}", as_string);
+            spdlog::trace("Found a video file: {}", as_string);
             video_files_.emplace_back(std::move(as_string));
          }
       }
