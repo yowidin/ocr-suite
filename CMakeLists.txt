@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.6)
-project(ocr_suite VERSION 0.3.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+project(ocr_suite VERSION 0.4.0 LANGUAGES CXX)
 
 #################################################################################
 ### Setup platform-specific flags
@@ -140,9 +140,7 @@ FetchContent_Declare(
    GIT_REPOSITORY https://github.com/nothings/stb
    GIT_TAG 8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
 )
-if (NOT stb_POPULATED)
-   FetchContent_Populate(stb)
-endif ()
+FetchContent_MakeAvailable(stb)
 
 # UI Dependencies
 find_package(SDL2 CONFIG REQUIRED)
