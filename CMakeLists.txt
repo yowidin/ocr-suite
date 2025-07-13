@@ -105,6 +105,7 @@ add_executable(
 
    src/recognition/bmp.cpp
    src/recognition/ocr.cpp
+   src/recognition/provider/tesseract.cpp
 
    src/recognition/speed_meter.cpp
    src/recognition/options.cpp

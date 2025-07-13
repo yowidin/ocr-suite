@@ -6,14 +6,12 @@
 
 #include <ocs/common/ocr_result.h>
 
-#include <ocs/recognition/options.h>
 #include <ocs/common/video.h>
+#include <ocs/recognition/options.h>
+#include <ocs/recognition/provider/provider.h>
 
 #include <functional>
 #include <string>
-#include <vector>
-
-#include <tesseract/baseapi.h>
 
 namespace ocs::recognition {
 
@@ -31,20 +29,16 @@ public:
    ocr(const ocr &) = delete;
 
    ocr &operator=(const ocr &) = delete;
+   ~ocr();
 
 public:
-   void start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter);
-
-private:
-   void do_ocr(const frame_t &frame);
+   void start(const value_queue_ptr_t &queue, const ocr_filter_cb_t &filter) const;
 
 private:
    const options *opts_;
    std::string bitmap_directory_{};
-
-   tesseract::TessBaseAPI ocr_api_{};
    ocr_result_cb_t cb_;
-   int min_letters_threshold_{3};
+   std::unique_ptr<provider::provider> provider_;
 };
 
-} // namespace ocs
+} // namespace ocs::recognition
