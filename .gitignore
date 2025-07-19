@@ -1,6 +1,7 @@
 compile_commands.json
 
 CMakeUserPresets.json
+conan_provider.cmake
 
 .DS_Store
 .venv
