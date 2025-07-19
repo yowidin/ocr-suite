@@ -7,6 +7,8 @@
 
 #include <ocs/recognition/provider/provider.h>
 
+#include <lyra/lyra.hpp>
+
 #include <memory>
 
 namespace ocs::recognition::provider {
@@ -16,8 +18,18 @@ private:
    class api;
 
 public:
-   tesseract(const char *tess_data_path, const char *language);
-   ~tesseract();
+   struct config {
+      explicit config(lyra::cli &cli);
+
+      std::string data_path{};
+      std::string language{"eng+rus+deu"};
+
+      bool validate() const;
+   };
+
+public:
+   explicit tesseract(const config &config);
+   ~tesseract() override;
 
 public:
    result_t do_ocr(const ffmpeg::decoder::frame &frame) override;

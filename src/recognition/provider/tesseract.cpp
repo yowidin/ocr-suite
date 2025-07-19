@@ -7,13 +7,16 @@
 #include <ocs/common/util.h>
 #include <ocs/recognition/provider/tesseract.h>
 
-#include <tesseract/baseapi.h>
-
 #include <spdlog/spdlog.h>
+#include <tesseract/baseapi.h>
+#include <boost/filesystem.hpp>
 
 using namespace ocs;
 namespace provider = recognition::provider;
 
+/*******************************************************************************
+ * Tesseract API wrapper
+ ******************************************************************************/
 class provider::tesseract::api {
 public:
    ::tesseract::TessBaseAPI *operator->() { return &api_; }
@@ -23,11 +26,38 @@ private:
    ::tesseract::TessBaseAPI api_{};
 };
 
-provider::tesseract::tesseract(const char *tess_data_path, const char *language)
+/*******************************************************************************
+ * Tesseract provider config
+ ******************************************************************************/
+provider::tesseract::config::config(lyra::cli &cli) {
+   cli.add_argument(lyra::opt(data_path, "tess_data_path")
+                        .name("-t")
+                        .name("--tess-data-path")
+                        .help("Path to the Tesseract data directory. You can download a copy here: "
+                              "https://github.com/tesseract-ocr/tessdata/releases/"));
+   cli.add_argument(lyra::opt(language, "language")
+                        .name("-l")
+                        .name("--language")
+                        .help("OCR language, e.g. 'eng+rus+deu', or just 'eng'"));
+}
+
+bool provider::tesseract::config::validate() const {
+   if (!boost::filesystem::exists(data_path)) {
+      std::cerr << "Tesseract data directory does not exist: " << data_path << std::endl;
+      return false;
+   }
+
+   return true;
+}
+
+/*******************************************************************************
+ * Tesseract provider
+ ******************************************************************************/
+provider::tesseract::tesseract(const config &cfg)
    : api_{std::make_unique<api>()} {
    auto &api = *api_;
 
-   if (const auto res = api->Init(tess_data_path, language, ::tesseract::OEM_LSTM_ONLY)) {
+   if (const auto res = api->Init(cfg.data_path.c_str(), cfg.language.c_str(), ::tesseract::OEM_LSTM_ONLY)) {
       throw std::runtime_error(fmt::format("Could not initialize tesseract: {}", res));
    }
 

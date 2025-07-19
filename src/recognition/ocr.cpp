@@ -35,7 +35,7 @@ ocr::ocr(const options &opts, ocr_result_cb_t cb)
    : opts_{&opts}
    , cb_{std::move(cb)} {
    // TODO: Provider selection
-   provider_ = std::make_unique<provider::tesseract>(opts_->tess_data_path.c_str(), opts_->language.c_str());
+   provider_ = std::make_unique<provider::tesseract>(opts_->tesseract);
 
    bitmap_directory_ = get_bitmap_directory(opts_->database_file);
    if (opts_->save_bitmaps) {
