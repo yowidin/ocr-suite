@@ -206,28 +206,9 @@ set_target_properties(
 ################################################################################
 ### Tests and installers
 
-if (BUILD_TESTS)
+if(BUILD_TESTS)
    add_subdirectory(test)
-endif ()
-
-option(DOWNLOAD_TESS_DATA "Download tesseract data" OFF)
-if (DOWNLOAD_TESS_DATA)
-   include(FetchContent)
-   set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
-   FetchContent_Declare(
-      tessdata
-
-      URL https://github.com/tesseract-ocr/tessdata/archive/refs/tags/4.1.0.zip
-      URL_HASH SHA1=b75493c8567d7c4b7c9e2d771cca0d3443983196
-   )
-   if (NOT tessdata_POPULATED)
-      message(STATUS "Downloading Tesseract data")
-      FetchContent_Populate(tessdata)
-
-      message(STATUS "Copying Tesseract data")
-      file(COPY ${tessdata_SOURCE_DIR}/ DESTINATION ${CMAKE_BINARY_DIR}/tessdata)
-   endif ()
-endif ()
+endif()
 
 include(cmake/install_helper.cmake)
 include(cmake/package_helper.cmake)
