@@ -30,7 +30,10 @@ class Recipe(ConanFile):
         'stb/cci.20240531',
         'sdl/2.26.1',
         'imgui/cci.20220621+1.88.docking',
-        'glad/0.1.36'
+        'glad/0.1.36',
+
+        # CLI
+        'nlohmann_json/3.12.0',
     ]
 
     keep_imports = True

@@ -1,7 +1,7 @@
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-set(OCS_INSTALL_TARGETS ocr_suite ocr_suite_viewer)
+set(OCS_INSTALL_TARGETS ocr_suite ocr_suite_viewer ocr_cli)
 
 install(
     TARGETS ${OCS_INSTALL_TARGETS}
