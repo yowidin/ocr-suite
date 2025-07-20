@@ -133,21 +133,12 @@ set_target_properties(
 ################################################################################
 ### UI Tool
 
-include(FetchContent)
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
-FetchContent_Declare(
-   stb
-
-   GIT_REPOSITORY https://github.com/nothings/stb
-   GIT_TAG 8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55
-)
-FetchContent_MakeAvailable(stb)
-
 # UI Dependencies
 find_package(SDL2 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(stb REQUIRED)
 
 add_executable(
    ocr_suite_viewer
@@ -182,14 +173,13 @@ target_link_libraries(ocr_suite_viewer
    PRIVATE
       ocr_common
       SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL
-      Boost::date_time Boost::filesystem bfg::lyra
+      Boost::date_time Boost::filesystem bfg::lyra stb::stb
 )
 
 target_include_directories(
    ocr_suite_viewer PUBLIC
 
    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/bindings>
-   PUBLIC $<BUILD_INTERFACE:${stb_SOURCE_DIR}>
    PRIVATE src/viewer/fonts
 )
 

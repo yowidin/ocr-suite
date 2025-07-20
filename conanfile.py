@@ -27,6 +27,7 @@ class Recipe(ConanFile):
         'boost/1.88.0',
 
         # Viewer UI
+        'stb/cci.20240531',
         'sdl/2.26.1',
         'imgui/cci.20220621+1.88.docking',
         'glad/0.1.36'
