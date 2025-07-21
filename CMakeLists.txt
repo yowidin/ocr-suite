@@ -101,13 +101,8 @@ target_link_libraries(ocr_suite
 set_target_properties(ocr_suite PROPERTIES OUTPUT_NAME ocr-suite)
 
 ################################################################################
-### UI Tool
-add_executable(ocr_suite_viewer
-    src/viewer/main.cpp
-    src/viewer/options.cpp
-    src/viewer/search.cpp
-    src/viewer/results.cpp
-
+### UI Common
+add_library(ocr_ui_common STATIC
     src/viewer/render/frontend.cpp
     src/viewer/render/backend.cpp
     src/viewer/render/impl/opengl2.cpp
@@ -119,24 +114,41 @@ add_executable(ocr_suite_viewer
     src/viewer/render/imgui/std_input_text.cpp
     src/viewer/render/window.cpp
 
-    src/viewer/views/frame_view.cpp
-    src/viewer/views/search_results_view.cpp
-    src/viewer/views/search_view.cpp
-    src/viewer/views/viewer.cpp
-
     ${CMAKE_CURRENT_BINARY_DIR}/bindings/imgui_impl_opengl2.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/bindings/imgui_impl_opengl3.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/bindings/imgui_impl_sdl.cpp
 )
 
-target_link_libraries(ocr_suite_viewer
-    PRIVATE ocr_common SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL
-    PRIVATE Boost::date_time Boost::filesystem bfg::lyra stb::stb
+target_link_libraries(ocr_ui_common
+    PUBLIC SDL2::SDL2-static SDL2::SDL2main imgui::imgui glad::glad OpenGL::GL
 )
 
-target_include_directories(ocr_suite_viewer
+target_include_directories(ocr_ui_common
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/bindings>
-    PRIVATE src/viewer/fonts
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+    PUBLIC $<BUILD_INTERFACE:${OCS_GENERATED_INCLUDE_DIR}>
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/src/viewer/fonts>
+)
+
+set_target_properties(ocr_ui_common PROPERTIES OUTPUT_NAME ocr-ui-common)
+
+################################################################################
+### UI Tool
+add_executable(ocr_suite_viewer
+    src/viewer/main.cpp
+    src/viewer/options.cpp
+    src/viewer/search.cpp
+    src/viewer/results.cpp
+
+    src/viewer/views/frame_view.cpp
+    src/viewer/views/search_results_view.cpp
+    src/viewer/views/search_view.cpp
+    src/viewer/views/viewer.cpp
+)
+
+target_link_libraries(ocr_suite_viewer
+    PRIVATE ocr_common ocr_ui_common
+    PRIVATE Boost::date_time Boost::filesystem bfg::lyra stb::stb
 )
 
 set_target_properties(ocr_suite_viewer PROPERTIES OUTPUT_NAME ocr-viewer)
