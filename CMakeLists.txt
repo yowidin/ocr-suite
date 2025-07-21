@@ -29,6 +29,17 @@ configure_file(cmake/config.h.in ${OCS_GENERATED_CONFIG_HEADER} @ONLY)
 find_package(ffmpeg CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(indicators CONFIG REQUIRED)
+find_package(SQLiteBurrito CONFIG REQUIRED)
+find_package(PNG CONFIG REQUIRED)
+find_package(Tesseract CONFIG REQUIRED)
+find_package(lyra CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
+find_package(SDL2 CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(stb CONFIG REQUIRED)
+
+find_package(OpenGL REQUIRED)
 
 ################################################################################
 ### FFMPEG helper
@@ -61,8 +72,6 @@ set_target_properties(
 
 ################################################################################
 ### Library
-find_package(SQLiteBurrito CONFIG REQUIRED)
-
 add_library(
    ocr_common STATIC
 
@@ -95,11 +104,6 @@ set_target_properties(
 
 ################################################################################
 ### Main Tool
-find_package(PNG CONFIG REQUIRED)
-find_package(Tesseract CONFIG REQUIRED)
-find_package(lyra CONFIG REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS filesystem date_time)
-
 add_executable(
    ocr_suite
 
@@ -132,14 +136,6 @@ set_target_properties(
 
 ################################################################################
 ### UI Tool
-
-# UI Dependencies
-find_package(SDL2 CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(stb REQUIRED)
-
 add_executable(
    ocr_suite_viewer
 
@@ -200,7 +196,6 @@ add_subdirectory(src/tools)
 
 ################################################################################
 ### Tests and installers
-
 if(BUILD_TESTS)
    add_subdirectory(test)
 endif()
