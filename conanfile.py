@@ -28,7 +28,7 @@ class Recipe(ConanFile):
 
         # Viewer UI
         'stb/cci.20240531',
-        'sdl/2.26.1',
+        'sdl/2.32.2',
         'imgui/cci.20220621+1.88.docking',
         'glad/0.1.36',
 
