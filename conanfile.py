@@ -19,10 +19,10 @@ class Recipe(ConanFile):
         'ffmpeg/7.1.1',
         'tesseract/5.5.0',
         'libpng/1.6.50',
-        'catch2/3.2.1',
+        'catch2/3.8.1',
         'spdlog/1.9.2',
         'lyra/1.6.1',
-        'sqlite-burrito/0.2.2@conan-burrito/stable',
+        'sqlite-burrito/0.2.4@conan-burrito/stable',
         'indicators/2.2',
         'boost/1.88.0',
 
