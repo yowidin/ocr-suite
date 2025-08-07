@@ -1,15 +1,16 @@
 from conan import ConanFile
-from conan.tools.files import copy
+from conan.tools.files import copy, load
+from conan.tools.build import check_min_cppstd, can_run
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 
 from typing import List
 
 import os
+import re
 
 
 class Recipe(ConanFile):
     name = 'ocr-suite'
-    version = '0.4.0'
 
     description = 'OCR Suite'
     settings = 'os', 'arch', 'compiler', 'build_type'
@@ -38,10 +39,27 @@ class Recipe(ConanFile):
 
     keep_imports = True
 
+    def validate(self):
+        check_min_cppstd(self, "17")
+
+    def set_version(self):
+        if self.version:
+            return
+
+        cmake_contents = load(self, os.path.join(self.recipe_folder, 'CMakeLists.txt'))
+
+        regex = r"^project\(\w+\s+VERSION\s+(.*?)\s+.*?\)\s*$"
+        m = re.search(regex, cmake_contents, re.MULTILINE)
+        if not m:
+            raise RuntimeError('Error extracting library version')
+
+        self.version = m.group(1)
+
     def requirements(self):
+        # TODO: Remove if no longer required
         # Override incompatible dependencies
-        self.requires('openssl/1.1.1t', override=True)
-        self.requires('xz_utils/5.4.0', override=True)
+        # self.requires('openssl/3.5.2', override=True)
+        # self.requires('xz_utils/5.4.5', override=True)
 
         # The default zlib 1.2.13 (required by ffmpeg, boost, and other packets) is not buildable on macOS 15.5
         self.requires('zlib/1.3.1', override=True)
