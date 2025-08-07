@@ -29,7 +29,7 @@ class Recipe(ConanFile):
         # Viewer UI
         'stb/cci.20240531',
         'sdl/2.32.2',
-        'imgui/cci.20220621+1.88.docking',
+        'imgui/cci.20230105+1.89.2.docking',
         'glad/0.1.36',
 
         # CLI

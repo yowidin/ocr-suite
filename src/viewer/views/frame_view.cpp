@@ -242,7 +242,7 @@ void frame_view::handle_scroll_to_text_hotkeys() {
          break;
       }
 
-      if (ImGui::IsKeyPressed(i)) {
+      if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(i))) {
          scroll_to_idx_ = idx;
          break;
       }
@@ -254,7 +254,7 @@ void frame_view::handle_scroll_to_text_hotkeys() {
 }
 
 void frame_view::handle_jump_hotkeys() {
-   static std::map<int, std::function<void()>> keymap = {
+   static std::map<ImGuiKey, std::function<void()>> keymap = {
        {ImGuiKey_UpArrow, [this] { jump_to_previous_frame(); }},
        {ImGuiKey_DownArrow, [this] { jump_to_next_frame(); }},
        {ImGuiKey_LeftArrow, [this] { jump_to_previous_minute(); }},
@@ -263,9 +263,9 @@ void frame_view::handle_jump_hotkeys() {
        {ImGuiKey_PageDown, [this] { jump_to_next_hour(); }},
    };
 
-   for (auto &kv : keymap) {
-      if (ImGui::IsKeyPressed(kv.first)) {
-         kv.second();
+   for (const auto &[key, func] : keymap) {
+      if (ImGui::IsKeyPressed(key)) {
+         func();
          break;
       }
    }
