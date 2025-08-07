@@ -36,6 +36,8 @@ class Recipe(ConanFile):
         'nlohmann_json/3.12.0',
     ]
 
+    test_requires = 'catch2/3.8.1'
+
     keep_imports = True
 
     def validate(self):
@@ -99,6 +101,9 @@ class Recipe(ConanFile):
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
+
+        if can_run(self):
+            cmake.ctest()
 
     def _import_bindings(self, target_dir):
         if not os.path.exists(target_dir):

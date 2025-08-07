@@ -159,7 +159,9 @@ add_subdirectory(src/tools)
 
 ################################################################################
 ### Tests and installers
-if(BUILD_TESTS)
+# Testing
+include(CTest)
+if(BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
