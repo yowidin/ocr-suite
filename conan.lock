@@ -3,7 +3,7 @@
     "requires": [
         "zstd/1.5.5#93372fe14bb7883bd4de82914e0a1841%1680716977.025",
         "zlib/1.3.1#b8bc2603263cf7eccbd6e17e66b0ed76%1733936244.862",
-        "xz_utils/5.4.0#186e94237b66f785e4ea095f2f621a56%1678279440.056",
+        "xz_utils/5.4.5#b885d1d79c9d30cff3803f7f551dbe66%1724318972.064",
         "xorg/system#de8fc1917bb3d11cf7a1d15eccf79c16%1681842477.341",
         "xkeyboard-config/system#493c19865261899b6633ecb43ce536d6%1672760927.706",
         "xkbcommon/1.6.0#06776a6aa42a7fd93244c4d1fd517be9%1741781632.663",
@@ -16,8 +16,8 @@
         "tesseract/5.5.0#cc1f274c2b9c226ef36863aaf26c68ea%1740400515.402",
         "stb/cci.20240531#ede183dce303916dab0c1b835df3926a%1720366012.336",
         "sqlite3/3.49.1#8631739a4c9b93bd3d6b753bac548a63%1740462952.817",
-        "sqlite-burrito/0.2.4@conan-burrito/stable#e999d2de23ec2ed120c39d319ad51ac5%1754076662.4618244",
-        "spdlog/1.9.2#a8e50eaf9821d376c7a26f8408a87134%1681336080.305",
+        "sqlite-burrito/0.2.4@conan-burrito/stable#b2c6197b430509dbb991df4a61ee5f31%1754421375.0",
+        "spdlog/1.15.3#3ca0e9e6b83af4d0151e26541d140c86%1748617970.519",
         "sdl/2.32.2#c7ab0fd21ad5f0bd48e9c3cc3f14995b%1750877611.982",
         "opus/1.4#d87c608b1df136de943b02656e166c4e%1746796769.145",
         "openssl/1.1.1t#7d9fc949345908e1b8609d9d9f528a08%1678477939.241",
@@ -49,14 +49,13 @@
         "libalsa/1.2.10#e64d5e1ced869a2f676145bab4f4a181%1724146566.895",
         "leptonica/1.83.1#58142618f0f8f12e20c333c45871c1d2%1731424016.463",
         "jbig/20160605#2d29fa02aacd76902e0d2cbbc24631ef%1676066289.194",
-        "indicators/2.2#fac1ef0b3e28e04bf597449f03326624%1676516036.175",
-        "imgui/cci.20220621+1.88.docking#409f50db557426a7ac8dcd4dabb305f8%1685800193.0",
+        "indicators/2.3#adc4f75d0510d76d5820d54973caad5f%1701262286.689",
         "imgui/cci.20230105+1.89.2.docking#18e2e1eb7009f6d5e16788061856aa22%1696587687.407",
         "glad/0.1.36#c926453afdd9d5f72cc4ee6a8fff7d73%1678839632.23",
         "giflib/5.2.1#15033c544d771fa992cda180c0a1f8e0%1678831544.445",
         "getopt-for-visual-studio/20200201#32ee360e2552fe65ad8bec52edcd64fd",
         "freetype/2.13.2#5d2563803c8558d4ef47271a82c73d20%1728736671.752",
-        "fmt/8.0.1#83a72a784eab50272df627a2f17a69be%1675126491.658",
+        "fmt/11.2.0#579bb2cdf4a7607621beea4eb4651e0f%1746298708.362",
         "ffmpeg/7.1.1#bc902a6c4ea39b9281e011c7411080c7%1747730852.987",
         "expat/2.7.1#b0b67ba910c5147271b444139ca06953%1743502492.76",
         "egl/system#068ac3037d8cf01f768d0e001e6dcd76%1681426530.637",
@@ -110,26 +109,11 @@
     ],
     "python_requires": [],
     "overrides": {
-        "xz_utils/5.4.2": [
-            "xz_utils/5.4.0"
-        ],
-        "openssl/[>=1.1 <4]": [
-            "openssl/1.1.1t"
-        ],
-        "xz_utils/5.4.0": [
-            "xz_utils/5.4.0#186e94237b66f785e4ea095f2f621a56"
-        ],
         "zlib/[>=1.2.11 <2]": [
             "zlib/1.3.1"
         ],
-        "xz_utils/5.4.5": [
-            "xz_utils/5.4.0#186e94237b66f785e4ea095f2f621a56"
-        ],
         "zlib/[>=1.2.10 <2]": [
             "zlib/1.3.1#b8bc2603263cf7eccbd6e17e66b0ed76"
-        ],
-        "xz_utils/[>=5.4.5 <6]": [
-            "xz_utils/5.4.0#186e94237b66f785e4ea095f2f621a56"
         ],
         "zlib/1.2.13": [
             "zlib/1.3.1#b8bc2603263cf7eccbd6e17e66b0ed76"
