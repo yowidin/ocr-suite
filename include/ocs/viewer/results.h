@@ -8,7 +8,6 @@
 
 #include <sqlite-burrito/versioned_database.h>
 
-#include <memory>
 #include <mutex>
 #include <optional>
 

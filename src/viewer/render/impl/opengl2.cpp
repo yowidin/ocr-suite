@@ -4,7 +4,6 @@
  * @date   Sep. 14, 2021
  */
 
-#include <ocs/viewer/render/frontend.h>
 #include <ocs/viewer/render/impl/opengl2.h>
 
 #include <imgui_impl_opengl2.h>

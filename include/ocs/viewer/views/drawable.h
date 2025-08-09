@@ -13,7 +13,7 @@ public:
 
 public:
    virtual void draw() = 0;
-   virtual const char *name() const = 0;
+   [[nodiscard]] virtual const char *name() const = 0;
 };
 
 } // namespace ocs::viewer::views

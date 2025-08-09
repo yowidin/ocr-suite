@@ -11,8 +11,10 @@ using namespace ocs::ffmpeg;
 
 namespace {
 
-enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
-   const auto requested = reinterpret_cast<const AVPixelFormat *>(ctx->opaque);
+// Const cannot be added here - ffmpeg expects this signature
+// ReSharper disable CppParameterMayBeConstPtrOrRef
+AVPixelFormat get_hw_format(AVCodecContext *ctx, const AVPixelFormat *pix_fmts) {
+   const auto requested = static_cast<const AVPixelFormat *>(ctx->opaque);
    for (const AVPixelFormat *p = pix_fmts; *p != AV_PIX_FMT_NONE; ++p) {
       if (*p == *requested) {
          return *p;
@@ -36,6 +38,7 @@ decoder::frame_filter picture_type_to_filter(AVPictureType type) {
          return decoder::frame_filter::I;
    }
 }
+// ReSharper restore CppParameterMayBeConstPtrOrRef
 
 } // namespace
 
@@ -69,7 +72,7 @@ decoder::decoder(std::string video_path, frame_filter filter, frame_cb_t cb, std
    , filter_{filter}
    , cb_{std::move(cb)}
    , starting_frame_{starting_frame}
-   , ffmpeg_{new ffmpeg_data} {
+   , ffmpeg_{std::make_unique<ffmpeg_data>()} {
    static ffmpeg::traits::log_setup _{};
 
    auto &input_ctx = ffmpeg_->input_ctx;
@@ -147,7 +150,7 @@ std::chrono::seconds decoder::frame_number_to_seconds(std::int64_t frame_number)
    return std::chrono::duration_cast<std::chrono::seconds>(frame_number_to_milliseconds(frame_number));
 }
 
-void decoder::hw_decoder_init() {
+void decoder::hw_decoder_init() const {
    if (av_hwdevice_ctx_create(&ffmpeg_->hw_device_ctx, ffmpeg_->hw_device_type, nullptr, nullptr, 0) < 0) {
       throw std::runtime_error("Failed to create specified HW device");
    }
@@ -155,16 +158,18 @@ void decoder::hw_decoder_init() {
    ffmpeg_->decoder_ctx->hw_device_ctx = av_buffer_ref(ffmpeg_->hw_device_ctx);
 }
 
-bool decoder::seek_to_frame(std::int64_t frame_number) {
+bool decoder::seek_to_frame(std::int64_t frame_number) const {
    const auto starting_time = frame_number_to_timestamp(frame_number);
-   int res = avformat_seek_file(ffmpeg_->input_ctx, ffmpeg_->video_stream_idx, 0, starting_time, starting_time,
-                                AVSEEK_FLAG_FRAME);
+   const int res = avformat_seek_file(ffmpeg_->input_ctx, ffmpeg_->video_stream_idx, 0, starting_time, starting_time,
+                                      AVSEEK_FLAG_FRAME);
    return res >= 0;
 }
 
 void decoder::seek_to_closest_frame(std::int64_t min_frame, std::int64_t max_frame, std::int64_t last_working) {
    if (max_frame == 0) {
-      seek_to_frame(last_working);
+      if (!seek_to_frame(last_working)) {
+         spdlog::warn("Could not seek to the last working frame ({}) while handling max frame", last_working);
+      }
       return;
    }
 
@@ -172,10 +177,12 @@ void decoder::seek_to_closest_frame(std::int64_t min_frame, std::int64_t max_fra
       return;
    }
 
-   auto middle_frame = min_frame + (max_frame - min_frame) / 2;
+   const auto middle_frame = min_frame + ((max_frame - min_frame) / 2);
    if (middle_frame == min_frame || middle_frame == max_frame) {
       // We went too deep, no more divisions are possible
-      seek_to_frame(last_working);
+      if (!seek_to_frame(last_working)) {
+         spdlog::warn("Could not seek to the last working frame ({}) while being too deep.", last_working);
+      }
       return;
    }
 
@@ -186,7 +193,7 @@ void decoder::seek_to_closest_frame(std::int64_t min_frame, std::int64_t max_fra
    }
 }
 
-void decoder::convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::uint8_t> &target) {
+void decoder::convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::uint8_t> &target) const {
    auto &rgb = *ffmpeg_->rgb_frame;
    rgb.format = AV_PIX_FMT_RGB24;
    rgb.width = src.width;
@@ -207,12 +214,11 @@ void decoder::convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::
    sws_scale(sws_context, static_cast<const uint8_t *const *>(src.data), src.linesize, 0, src.height, rgb.data,
              rgb.linesize);
 
-   auto size = av_image_get_buffer_size(av_format(rgb.format), rgb.width, rgb.height, 1);
+   const auto size = av_image_get_buffer_size(av_format(rgb.format), rgb.width, rgb.height, 1);
    target.resize(size);
 
-   ret =
-       av_image_copy_to_buffer(target.data(), size, static_cast<const uint8_t *const *>(rgb.data),
-                               static_cast<const int *>(rgb.linesize), av_format(rgb.format), rgb.width, rgb.height, 1);
+   ret = av_image_copy_to_buffer(target.data(), size, rgb.data, rgb.linesize, av_format(rgb.format), rgb.width,
+                                 rgb.height, 1);
    if (ret < 0) {
       throw std::runtime_error("Could not copy image to buffer");
    }
@@ -220,7 +226,7 @@ void decoder::convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::
    av_freep(&rgb.data);
 }
 
-void decoder::to_frame(const AVFrame &src, std::int64_t frame_number, frame &target) {
+void decoder::to_frame(const AVFrame &src, std::int64_t frame_number, frame &target) const {
    target.frame_number = frame_number;
    target.width = src.width;
    target.height = src.height;
@@ -228,7 +234,7 @@ void decoder::to_frame(const AVFrame &src, std::int64_t frame_number, frame &tar
    target.bytes_per_line = ffmpeg_->rgb_frame->linesize[0];
 }
 
-bool decoder::handle_decoded_frames(AVPacket *packet) {
+bool decoder::handle_decoded_frames(const AVPacket *packet) const {
    auto &decoder_ctx = ffmpeg_->decoder_ctx;
 
    int ret = avcodec_send_packet(decoder_ctx, packet);
@@ -240,12 +246,15 @@ bool decoder::handle_decoded_frames(AVPacket *packet) {
    traits::frame rgb_frame;
 
    while (true) {
-      traits::frame frame, sw_frame;
+      traits::frame frame;
+      traits::frame sw_frame;
 
       ret = avcodec_receive_frame(decoder_ctx, frame);
       if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
          return true;
-      } else if (ret < 0) {
+      }
+
+      if (ret < 0) {
          spdlog::error("Error during decoding: {}", ret);
          return false;
       }
@@ -269,7 +278,7 @@ bool decoder::handle_decoded_frames(AVPacket *packet) {
          tmp_frame = frame.get();
       }
 
-      auto frame_number =
+      const auto frame_number =
           static_cast<std::int64_t>(static_cast<double>(frame->pts) * ffmpeg_->time_ratio * ffmpeg_->frame_ratio);
 
       if (frame_number < starting_frame_) {
@@ -277,21 +286,19 @@ bool decoder::handle_decoded_frames(AVPacket *packet) {
          continue;
       }
 
-      auto frame_action = cb_(*tmp_frame, frame_number);
-      if (frame_action != action::decode_next) {
+      if (const auto frame_action = cb_(*tmp_frame, frame_number); frame_action != action::decode_next) {
          // We are done here
          return false;
       }
    }
 }
 
-void decoder::run() {
+void decoder::run() const {
    bool can_run = true;
 
    traits::packet packet;
    while (can_run) {
-      int ret = av_read_frame(ffmpeg_->input_ctx, packet);
-      if (ret < 0) {
+      if (const int ret = av_read_frame(ffmpeg_->input_ctx, packet); ret < 0) {
          break;
       }
 
@@ -304,6 +311,8 @@ void decoder::run() {
 
    // flush the decoder
    if (can_run) {
-      handle_decoded_frames(nullptr);
+      if (!handle_decoded_frames(nullptr)) {
+         spdlog::warn("Could not flush the frames");
+      }
    }
 }

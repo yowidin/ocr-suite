@@ -72,9 +72,9 @@ void database::store(const common::ocr_result &result) {
       stmt.bind(":ptext", text);
       stmt.step();
 
-      std::int64_t result;
-      stmt.get(0, result);
-      return result;
+      std::int64_t entry_id;
+      stmt.get(0, entry_id);
+      return entry_id;
    };
 
    auto &stmt = add_text_instance_;
@@ -82,7 +82,7 @@ void database::store(const common::ocr_result &result) {
    try {
       auto transaction = db_.get_connection().begin_transaction();
 
-      for (auto &entry : result.entries) {
+      for (const auto &entry : result.entries) {
          add_text_entry(entry.text);
          auto text_id = get_text_entry_id(entry.text);
 
@@ -107,7 +107,7 @@ void database::store(const common::ocr_result &result) {
    }
 }
 
-std::int64_t database::get_starting_frame_number() {
+auto database::get_starting_frame_number() -> std::int64_t {
    std::lock_guard lock{database_mutex_};
    auto &stmt = get_starting_frame_number_;
 
@@ -158,14 +158,14 @@ void database::find_text(const std::string &text, std::vector<search_entry> &ent
 
    while (stmt.step()) {
       entries.emplace_back();
-      auto &e = entries.back();
-      stmt.get(0, e.frame_number);
-      stmt.get(1, e.left);
-      stmt.get(2, e.top);
-      stmt.get(3, e.right);
-      stmt.get(4, e.bottom);
-      stmt.get(5, e.confidence);
-      stmt.get(6, e.text);
+      auto &entry = entries.back();
+      stmt.get(0, entry.frame_number);
+      stmt.get(1, entry.left);
+      stmt.get(2, entry.top);
+      stmt.get(3, entry.right);
+      stmt.get(4, entry.bottom);
+      stmt.get(5, entry.confidence);
+      stmt.get(6, entry.text);
    }
 }
 

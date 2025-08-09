@@ -142,7 +142,7 @@ int main(int argc, const char **argv) {
          };
 
          auto filter_callback = [&](std::int64_t frame_number) {
-            auto processed = db.is_frame_processed(frame_number);
+            const auto processed = db.is_frame_processed(frame_number);
             if (processed) {
                meter.add_skipped_frame(frame_number);
                spinner.set_progress(frame_number);
@@ -150,7 +150,7 @@ int main(int argc, const char **argv) {
             return !processed;
          };
 
-         ocr ocr{options, ocr_callback};
+         const ocr ocr{options, ocr_callback};
          ocr.start(queue, filter_callback);
       } catch (const std::exception &ex) {
          spdlog::error("Consumer thread exception: {}", ex.what());

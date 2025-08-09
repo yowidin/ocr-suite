@@ -21,13 +21,13 @@ public:
    ~frontend();
 
 public:
-   void new_frame();
-   void render();
-   void process_event(const SDL_Event &event);
+   void new_frame() const;
+   void render() const;
+   static void process_event(const SDL_Event &event);
 
-   const std::string &shader_version() const { return shader_version_; }
+   [[nodiscard]] const std::string &shader_version() const { return shader_version_; }
 
-   SDL_Window &window() { return *window_; }
+   [[nodiscard]] SDL_Window &window() const { return *window_; }
 
 private:
    SDL_Window *window_;

@@ -64,9 +64,9 @@ provider::tesseract::tesseract(const config &cfg)
    api->SetPageSegMode(::tesseract::PageSegMode::PSM_SPARSE_TEXT);
 
 #ifdef _WIN32
-   auto null_device = "nul";
+   const auto null_device = "nul";
 #else
-   auto null_device = "/dev/null";
+   const auto null_device = "/dev/null";
 #endif
 
    api->SetVariable("debug_file", null_device);

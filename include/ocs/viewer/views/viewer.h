@@ -9,7 +9,6 @@
 #include <ocs/viewer/search.h>
 #include <ocs/viewer/results.h>
 
-#include <ocs/viewer/views/drawable.h>
 #include <ocs/viewer/views/frame_view.h>
 #include <ocs/viewer/views/search_results_view.h>
 #include <ocs/viewer/views/search_view.h>
@@ -20,7 +19,7 @@ namespace ocs::viewer::views {
 
 class viewer {
 public:
-   viewer(options opts);
+   explicit viewer(options opts);
 
 public:
    void run();

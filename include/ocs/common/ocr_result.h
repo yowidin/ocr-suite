@@ -24,4 +24,4 @@ struct ocr_result {
 
 } // namespace ocs::common
 
-#endif // OCR_SUITE_OCR_RESULT_H
+#endif // OCS_COMMON_OCR_RESULT_H

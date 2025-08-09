@@ -24,11 +24,11 @@ public:
       std::string data_path{};
       std::string language{"eng+rus+deu"};
 
-      bool validate() const;
+      [[nodiscard]] bool validate() const;
    };
 
 public:
-   explicit tesseract(const config &config);
+   explicit tesseract(const config &cfg);
    ~tesseract() override;
 
 public:

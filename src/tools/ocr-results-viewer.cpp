@@ -209,7 +209,7 @@ private:
    void load_image() {
       int x, y, n;
       const auto data = stbi_load(opts_.image_file.c_str(), &x, &y, &n, 0);
-      if (!data) {
+      if (data == nullptr) {
          throw std::runtime_error(fmt::format("Failed to load image: {}", stbi_failure_reason()));
       }
 
@@ -281,7 +281,7 @@ private:
       draw_text_boxes(*draw_list, cursor_pos, image_region);
    }
 
-   void draw_text_boxes(ImDrawList &draw_list, const ImVec2 &cursor_pos, const ImVec2 &image_region) {
+   void draw_text_boxes(ImDrawList &draw_list, const ImVec2 &cursor_pos, const ImVec2 &image_region) const {
       // "Interpolate" color between green and red (passing through yellow) - the higher value - the redder
       auto lerp_color = [&](const uint16_t value, const uint16_t max = 255) -> ImU32 {
          uint8_t r, g;

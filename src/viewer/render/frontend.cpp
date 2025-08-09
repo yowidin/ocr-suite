@@ -29,7 +29,7 @@ frontend::frontend(SDL_Window &window, SDL_GLContext context)
 
    int profile;
    SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &profile);
-   bool is_es = profile & SDL_GL_CONTEXT_PROFILE_ES;
+   const bool is_es = (profile & SDL_GL_CONTEXT_PROFILE_ES) != 0;
 
    if (GLVersion.major >= 3) {
       if (is_es) {
@@ -64,13 +64,13 @@ frontend::~frontend() {
    ImGui::DestroyContext();
 }
 
-void frontend::new_frame() {
+void frontend::new_frame() const {
    backend_->new_frame();
    ImGui_ImplSDL2_NewFrame(window_);
    ImGui::NewFrame();
 }
 
-void frontend::render() {
+void frontend::render() const {
    ImGui::Render();
    backend_->render();
 }

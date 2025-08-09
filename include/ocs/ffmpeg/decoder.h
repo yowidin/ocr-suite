@@ -68,30 +68,30 @@ public:
    decoder &operator=(decoder &&) = delete;
 
 public:
-   void run();
+   void run() const;
 
-   std::chrono::milliseconds frame_number_to_milliseconds(std::int64_t frame_number) const;
+   [[nodiscard]] std::chrono::milliseconds frame_number_to_milliseconds(std::int64_t frame_number) const;
 
-   std::chrono::seconds frame_number_to_seconds(std::int64_t frame_number) const;
+   [[nodiscard]] std::chrono::seconds frame_number_to_seconds(std::int64_t frame_number) const;
 
    //! @return Total number of frames in the video file. Will return std::nullopt in case if video is not finalized yet.
-   std::optional<std::int64_t> frame_count() const { return frame_count_; }
+   [[nodiscard]] std::optional<std::int64_t> frame_count() const { return frame_count_; }
 
    //! Convert a FFMPEG frame into our internal representation
-   void to_frame(const AVFrame &src, std::int64_t frame_number, frame &dst);
+   void to_frame(const AVFrame &src, std::int64_t frame_number, frame &target) const;
 
 private:
-   std::int64_t frame_number_to_timestamp(std::int64_t frame_number) const;
+   [[nodiscard]] std::int64_t frame_number_to_timestamp(std::int64_t frame_number) const;
 
-   void hw_decoder_init();
+   void hw_decoder_init() const;
 
-   bool seek_to_frame(std::int64_t frame_number);
+   [[nodiscard]] bool seek_to_frame(std::int64_t frame_number) const;
    void seek_to_closest_frame(std::int64_t min_frame, std::int64_t max_frame, std::int64_t last_working);
 
    //! @return true if the decoding can continue, false otherwise
-   bool handle_decoded_frames(AVPacket *packet);
+   bool handle_decoded_frames(const AVPacket *packet) const;
 
-   void convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::uint8_t> &target);
+   void convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::uint8_t> &target) const;
 
 private:
    const std::string path_;

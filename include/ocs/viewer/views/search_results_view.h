@@ -14,7 +14,7 @@ namespace ocs::viewer::views {
 
 class frame_view;
 
-class search_results_view : public drawable {
+class search_results_view final : public drawable {
 public:
    struct frame;
    struct minute;
@@ -73,7 +73,7 @@ public:
 
 public:
    void draw() override;
-   const char *name() const override { return "SearchResults"; }
+   [[nodiscard]] const char *name() const override { return "SearchResults"; }
 
    auto &get_days() { return days_; }
 

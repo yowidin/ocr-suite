@@ -10,10 +10,10 @@
 
 namespace ocs::viewer::render::impl {
 
-class GLES3 : public backend {
+class GLES3 final : public backend {
 public:
    using backend::backend;
-   ~GLES3();
+   ~GLES3() override;
 
 public:
    void init() override;

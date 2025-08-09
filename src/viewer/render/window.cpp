@@ -5,7 +5,6 @@
 #include <ocs/viewer/render/window.h>
 
 #include <ocs/config.h>
-#include <ocs/viewer/render/backend.h>
 #include <ocs/viewer/render/frontend.h>
 
 #include <SDL2/SDL.h>
@@ -25,7 +24,7 @@ void throw_sdl_error(const std::string &func) {
 }
 
 void throw_errors(const char *context) {
-   if (!glad_glGetError) {
+   if (glad_glGetError == nullptr) {
       throw std::runtime_error(context);
    }
 
@@ -81,17 +80,17 @@ window::window(options opts, draw_cb_t cb)
    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 #endif
 
-   auto window_flags =
-       (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
+   auto window_flags = static_cast<SDL_WindowFlags>(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
+                                                    SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
    if (options_.full_screen) {
-      window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_FULLSCREEN);
+      window_flags = static_cast<SDL_WindowFlags>(window_flags | SDL_WINDOW_FULLSCREEN);
    }
 
    window_ = SDL_CreateWindow(options_.title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, options_.width,
                               options_.height, window_flags);
 
    context_ = SDL_GL_CreateContext(window_);
-   if (!context_) {
+   if (context_ == nullptr) {
       throw_sdl_error("SDL_GL_CreateContext");
    }
 
@@ -115,7 +114,7 @@ window::window(options opts, draw_cb_t cb)
    int profile;
    SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &profile);
    const char *suffix = "";
-   if (profile & SDL_GL_CONTEXT_PROFILE_ES) {
+   if ((profile & SDL_GL_CONTEXT_PROFILE_ES) != 0) {
       suffix = " ES";
    }
 
@@ -154,8 +153,8 @@ void window::set_title(const std::string &title) {
 }
 
 void window::update() {
-   while (SDL_PollEvent(&event_)) {
-      frontend_->process_event(event_);
+   while (SDL_PollEvent(&event_) != 0) {
+      frontend::process_event(event_);
       if (event_.type == SDL_QUIT) {
          stop_ = true;
       } else if (event_.type == SDL_KEYUP) {
@@ -166,6 +165,8 @@ void window::update() {
          switch (event_.window.event) {
             case (SDL_WINDOWEVENT_RESIZED):
                SDL_GetWindowSize(window_, &options_.width, &options_.height);
+               break;
+            default:
                break;
          }
       }
@@ -179,8 +180,8 @@ void window::update() {
 
    frontend_->new_frame();
 
-   auto &io = ImGui::GetIO();
-   glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+   const auto &io = ImGui::GetIO();
+   glViewport(0, 0, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y));
    glClearColor(options_.background.x, options_.background.y, options_.background.z, options_.background.w);
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -191,7 +192,7 @@ void window::update() {
    SDL_GL_SwapWindow(window_);
 }
 
-void window::draw() {
+void window::draw() const {
    //   ImGui::SetNextWindowSize({static_cast<float>(options_.width), static_cast<float>(options_.height)});
    const ImGuiViewport *viewport = ImGui::GetMainViewport();
    ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -209,7 +210,7 @@ void window::draw() {
 
    ImGui::PopStyleVar(3);
 
-   auto dock_space_id = ImGui::GetID("Workspace");
+   const auto dock_space_id = ImGui::GetID("Workspace");
    static ImGuiDockNodeFlags dock_space_flags = ImGuiDockNodeFlags_None;
    ImGui::DockSpace(dock_space_id, ImVec2(0.0f, 0.0f), dock_space_flags);
 

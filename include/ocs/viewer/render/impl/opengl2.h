@@ -10,10 +10,10 @@
 
 namespace ocs::viewer::render::impl {
 
-class OpenGL2 : public backend {
+class OpenGL2 final : public backend {
 public:
    using backend::backend;
-   ~OpenGL2();
+   ~OpenGL2() override;
 
 public:
    void init() override;

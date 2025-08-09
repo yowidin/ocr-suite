@@ -11,7 +11,7 @@
 namespace {
 
 void update_v3_safe(sqlite_burrito::versioned_database &db) {
-   auto schema_update = R"sql(
+   const auto schema_update = R"sql(
 CREATE TABLE text_entries (
    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
    "value" TEXT UNIQUE NOT NULL
@@ -89,7 +89,7 @@ CREATE INDEX text_instances_frame_num_idx ON text_instances(frame_num);
 
    auto migrate_one_entry = [&](const database::search_entry &e) {
       add_text_entry(e.text);
-      auto text_id = get_text_entry_id(e.text);
+      const auto text_id = get_text_entry_id(e.text);
 
       ins_ocr_stmt.reset();
       ins_ocr_stmt.bind(":ptid", text_id);

@@ -9,7 +9,6 @@
 #include <functional>
 
 #include <spdlog/spdlog.h>
-#include <tesseract/baseapi.h>
 #include <boost/filesystem.hpp>
 
 using namespace ocs::recognition;

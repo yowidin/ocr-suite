@@ -2,7 +2,6 @@
 // Created by Dennis Sitelew on 18.12.22.
 //
 
-#include <ocs/common/util.h>
 #include <ocs/common/video.h>
 
 #include <spdlog/spdlog.h>
@@ -21,16 +20,16 @@ video::video(const std::string &path,
    // Nothing to do here
 }
 
-ocs::ffmpeg::decoder::action video::on_frame(const AVFrame &ffmpeg_frame, std::int64_t frame_number) {
+ocs::ffmpeg::decoder::action video::on_frame(const AVFrame &ffmpeg_frame, std::int64_t frame_number) const {
    using decoder_t = ocs::ffmpeg::decoder;
 
-   auto opt_frame = queue_->get_producer_value();
+   const auto opt_frame = queue_->get_producer_value();
    if (!opt_frame.has_value()) {
       // The queue is closed, we are done
       return decoder_t::action::stop;
    }
 
-   auto &frame = opt_frame.value();
+   const auto &frame = opt_frame.value();
 
    decoder_.to_frame(ffmpeg_frame, frame_number, *frame);
 
@@ -39,7 +38,7 @@ ocs::ffmpeg::decoder::action video::on_frame(const AVFrame &ffmpeg_frame, std::i
    return decoder_t::action::decode_next;
 }
 
-void video::start() {
+void video::start() const {
    decoder_.run();
    queue_->shutdown();
 }

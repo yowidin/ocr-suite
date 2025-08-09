@@ -4,6 +4,9 @@
 
 #pragma once
 
+// We are including all ffmpeg-related suff here, which might be unused in the header itself, but will be used in
+// the implementation
+// ReSharper disable CppUnusedIncludeDirective
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -15,6 +18,7 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 }
+// ReSharper restore CppUnusedIncludeDirective
 
 #include <string>
 #include <vector>
@@ -80,7 +84,7 @@ class resource {
 public:
    resource()
       : ptr_(trait::allocate()) {
-      if (!ptr_) {
+      if (ptr_ == nullptr) {
          throw std::runtime_error("Failed to allocate " + trait::name());
       }
    }
@@ -114,8 +118,11 @@ public:
    T *operator->() { return ptr_; }
    T &operator*() { return *ptr_; }
 
-   operator T *() { return ptr_; }
-   operator T **() { return &ptr_; }
+   // We are intentionally want to allow implicit convertion here, it's a resource wrapper after all
+   // ReSharper disable CppNonExplicitConversionOperator
+   operator T *() { return ptr_; } // NOLINT(*-explicit-constructor)
+   operator T **() { return &ptr_; } // NOLINT(*-explicit-constructor)
+   // ReSharper restore CppNonExplicitConversionOperator
 
 private:
    T *ptr_;
