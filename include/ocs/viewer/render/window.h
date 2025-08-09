@@ -34,7 +34,7 @@ public:
    ~window();
 
 public:
-   bool can_stop() const { return stop_; }
+   [[nodiscard]] bool can_stop() const { return stop_; }
    void update();
 
    void set_title(const std::string &title);
@@ -42,7 +42,7 @@ public:
    static window &instance();
 
 private:
-   void draw();
+   void draw() const;
 
 private:
    options options_;

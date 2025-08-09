@@ -22,7 +22,7 @@ void update_v2(sqlite_burrito::versioned_database &db, std::error_code &ec) {
       return;
    }
 
-   auto have_value = max_stmt.step(ec);
+   const auto have_value = max_stmt.step(ec);
    if (ec) {
       return;
    }
@@ -32,7 +32,7 @@ void update_v2(sqlite_burrito::versioned_database &db, std::error_code &ec) {
    }
 
    // Add the frame number column
-   auto sql = R"sql(
+   const auto sql = R"sql(
 BEGIN TRANSACTION;
 
 ALTER TABLE metadata

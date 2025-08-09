@@ -8,7 +8,6 @@
 
 #include <sqlite-burrito/versioned_database.h>
 
-#include <memory>
 #include <mutex>
 
 struct sqlite3;
@@ -31,7 +30,7 @@ public:
    };
 
 public:
-   database(std::string db_path, bool read_only = false);
+   explicit database(std::string db_path, bool read_only = false);
 
 public:
    void store(const ocr_result &result);

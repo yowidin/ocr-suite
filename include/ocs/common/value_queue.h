@@ -6,12 +6,10 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <cstdint>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <vector>
 
 namespace ocs::common {
 
@@ -28,7 +26,7 @@ public:
    using value_ptr_opt_t = std::optional<value_ptr_t>;
 
 public:
-   value_queue(std::size_t max_objects);
+   explicit value_queue(std::size_t max_objects);
 
 public:
    value_queue(const value_queue &) = delete;
@@ -80,8 +78,8 @@ private:
 /// Class: value_queue
 ////////////////////////////////////////////////////////////////////////////////
 template <typename T>
-value_queue<T>::value_queue(size_t num_values) {
-   for (size_t i = 0; i < num_values; ++i) {
+value_queue<T>::value_queue(size_t max_objects) {
+   for (size_t i = 0; i < max_objects; ++i) {
       producer_values_.emplace_back(std::make_shared<value_t>());
    }
 }

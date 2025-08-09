@@ -12,7 +12,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <vector>
 
 namespace ocs::common {
 
@@ -29,15 +28,15 @@ public:
          std::int64_t starting_frame = 0);
 
 public:
-   void start();
+   void start() const;
 
-   std::optional<std::int64_t> frame_count() const;
+   [[nodiscard]] std::optional<std::int64_t> frame_count() const;
 
-   std::chrono::seconds frame_number_to_seconds(std::int64_t num) const;
-   std::chrono::milliseconds frame_number_to_milliseconds(std::int64_t num) const;
+   [[nodiscard]] std::chrono::seconds frame_number_to_seconds(std::int64_t num) const;
+   [[nodiscard]] std::chrono::milliseconds frame_number_to_milliseconds(std::int64_t num) const;
 
 private:
-   ffmpeg::decoder::action on_frame(const AVFrame &ffmpeg_frame, std::int64_t frame_number);
+   ffmpeg::decoder::action on_frame(const AVFrame &ffmpeg_frame, std::int64_t frame_number) const;
 
 private:
    queue_ptr_t queue_;

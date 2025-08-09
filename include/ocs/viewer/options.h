@@ -5,7 +5,6 @@
 #ifndef OCR_SUITE_VIEWER_OPTIONS_H
 #define OCR_SUITE_VIEWER_OPTIONS_H
 
-#include <cstdint>
 #include <optional>
 #include <string>
 

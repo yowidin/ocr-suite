@@ -17,19 +17,19 @@
 
 namespace ocs::viewer::views {
 
-class frame_view : public drawable {
+class frame_view final : public drawable {
 public:
    using frame_t = std::optional<search_results_view::frame>;
 
 public:
-   frame_view(search_results_view &search_results);
+   explicit frame_view(search_results_view &search_results);
 
 public:
    void set_current_frame(const frame_t &frame);
 
 public:
    void draw() override;
-   const char *name() const override { return "FrameView"; }
+   [[nodiscard]] const char *name() const override { return "FrameView"; }
 
 private:
    void load_image_from_frame();

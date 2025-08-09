@@ -77,9 +77,13 @@ public:
    void collect_files();
    void find_text(const std::string &text);
 
-   bool is_finished() const { return remaining_size_ == 0; }
-   double get_progress() const { return 100.0 - (100.0 / total_size_) * remaining_size_; }
-   results &get_results() { return *results_; }
+   [[nodiscard]] bool is_finished() const { return remaining_size_ == 0; }
+
+   [[nodiscard]] double get_progress() const {
+      return 100.0 - ((100.0 / static_cast<double>(total_size_)) * static_cast<double>(remaining_size_));
+   }
+
+   [[nodiscard]] results &get_results() const { return *results_; }
 
 private:
    options options_;

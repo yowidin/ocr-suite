@@ -9,7 +9,7 @@
 namespace {
 
 void update_v0(sqlite_burrito::versioned_database &db, std::error_code &ec) {
-   auto sql = R"sql(
+   const auto sql = R"sql(
 BEGIN TRANSACTION;
 
 CREATE TABLE metadata(version INT);

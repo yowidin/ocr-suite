@@ -36,12 +36,11 @@ spdlog::level::level_enum ffmpeg_level_to_spdlog_level(int level) {
 }
 
 void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
-   const auto selected_level = av_log_get_level();
-   if (level > selected_level) {
+   if (const auto selected_level = av_log_get_level(); level > selected_level) {
       return;
    }
 
-   const AVClass *avc = avcl ? *(AVClass **)avcl : nullptr;
+   const AVClass *avc = (avcl != nullptr) ? *static_cast<AVClass **>(avcl) : nullptr;
    const spdlog::level::level_enum lvl = ffmpeg_level_to_spdlog_level(level);
 
    std::va_list args_copy;
@@ -55,7 +54,7 @@ void log_callback(void *avcl, int level, const char *fmt, va_list vl) {
    msg.resize(msg.size() - 1); // Remove the trailing null character
    ocs::common::util::trim(msg);
 
-   if (avc) {
+   if (avc != nullptr) {
       spdlog::log(lvl, "[{}] {}", avc->class_name, msg);
    } else {
       spdlog::log(lvl, "{}", msg);
@@ -74,8 +73,7 @@ std::vector<std::string> get_hw_decoders() {
    AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
 
    while ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE) {
-      const char *name = av_hwdevice_get_type_name(type);
-      if (name) {
+      if (const char *name = av_hwdevice_get_type_name(type)) {
          hw_decoders.emplace_back(name);
       }
    }
@@ -84,7 +82,7 @@ std::vector<std::string> get_hw_decoders() {
 }
 
 AVHWDeviceType get_default_hw_decoder_type() {
-   std::vector<std::string> hw_decoders = get_hw_decoders();
+   const std::vector<std::string> hw_decoders = get_hw_decoders();
    if (hw_decoders.empty()) {
       throw std::runtime_error("No HW decoders found");
    }
@@ -100,11 +98,11 @@ AVHWDeviceType get_default_hw_decoder_type() {
 AVPixelFormat find_pixel_format_for_decoder(const AVCodec *decoder, AVHWDeviceType type) {
    for (int i = 0;; ++i) {
       const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
-      if (!config) {
+      if (config == nullptr) {
          throw std::runtime_error("Decoder does not support device type");
       }
 
-      if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && config->device_type == type) {
+      if (((config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) != 0) && config->device_type == type) {
          return config->pix_fmt;
       }
    }

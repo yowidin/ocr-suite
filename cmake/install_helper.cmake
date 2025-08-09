@@ -1,7 +1,7 @@
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-set(OCS_INSTALL_TARGETS ocr_suite ocr_suite_viewer)
+set(OCS_INSTALL_TARGETS ocr_suite ocr_suite_viewer ocr_cli ocr_results_viewer)
 
 install(
     TARGETS ${OCS_INSTALL_TARGETS}
@@ -11,6 +11,3 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-
-# Don't include the tess_data - it's too big
-# install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tessdata DESTINATION ${CMAKE_INSTALL_DATADIR}/tessdata)

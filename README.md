@@ -34,6 +34,26 @@ conan build ../..
 
 You will find the `orc-suite` binary in the build directory.
 
+## Updating conan dependencies
+
+Navigate into your build folder:
+
+```shell
+cd build/release
+```
+
+Run conan with a temporary lock file:
+
+```shell
+conan build -s:a compiler.cppstd=17 --build=missing -s build_type=Release --lockfile-partial --lockfile-out=tmp.lock .
+```
+
+And then compare the `tmp.lock` file with the `conan.lock` file in the project root.
+
+NOTE: On Windows building ffmpeg from sources sometimes fails in the CI because of the MSYS2 version mismatch, I'm
+too lazy to investigate this any further so at the moment I'm just uploading ffmpeg binaries from my dev machine.
+
+
 ## Automating recognition
 You can use the `ocs-watcher` helper script to run the OCR Suite on all video files in a directory. 
 It will automatically detect when a new file is added and run the OCR Suite on it, as well as run

@@ -22,12 +22,12 @@ frame_view::frame_view(search_results_view &search_results)
 void frame_view::load_image_from_frame() {
    const auto &frame = current_frame_.value();
 
-   using decoder_t = ocs::ffmpeg::decoder;
+   using decoder_t = ffmpeg::decoder;
    decoder_t *decoder_ptr;
    auto frame_cb = [&decoder_ptr, this](const AVFrame &ffmpeg_frame, std::int64_t frame_number) {
-      decoder_t::frame frame;
-      decoder_ptr->to_frame(ffmpeg_frame, frame_number, frame);
-      make_texture(frame);
+      decoder_t::frame decoded;
+      decoder_ptr->to_frame(ffmpeg_frame, frame_number, decoded);
+      make_texture(decoded);
       return decoder_t::action::stop;
    };
 
@@ -79,7 +79,7 @@ void frame_view::set_current_frame(const frame_t &frame) {
       const auto &hour = *minute.owner;
       const auto &day = *hour.owner;
 
-      auto new_title = fmt::format("{} {:02}:{:02} - {}", day.name, hour.number, minute.number, f.number);
+      const auto new_title = fmt::format("{} {:02}:{:02} - {}", day.name, hour.number, minute.number, f.number);
       render::window::instance().set_title(new_title);
    }
 }
@@ -158,7 +158,8 @@ bool frame_view::is_shift_pressed() {
 
 void frame_view::jump_to_next_hour() {
    if (is_shift_pressed()) {
-      return jump_to_next_day();
+      jump_to_next_day();
+      return;
    }
 
    const auto minute = current_frame_.value().owner;
@@ -178,7 +179,8 @@ void frame_view::jump_to_next_hour() {
 
 void frame_view::jump_to_previous_hour() {
    if (is_shift_pressed()) {
-      return jump_to_previous_day();
+      jump_to_previous_day();
+      return;
    }
 
    const auto minute = current_frame_.value().owner;
@@ -242,7 +244,7 @@ void frame_view::handle_scroll_to_text_hotkeys() {
          break;
       }
 
-      if (ImGui::IsKeyPressed(i)) {
+      if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(i))) {
          scroll_to_idx_ = idx;
          break;
       }
@@ -254,7 +256,7 @@ void frame_view::handle_scroll_to_text_hotkeys() {
 }
 
 void frame_view::handle_jump_hotkeys() {
-   static std::map<int, std::function<void()>> keymap = {
+   static std::map<ImGuiKey, std::function<void()>> keymap = {
        {ImGuiKey_UpArrow, [this] { jump_to_previous_frame(); }},
        {ImGuiKey_DownArrow, [this] { jump_to_next_frame(); }},
        {ImGuiKey_LeftArrow, [this] { jump_to_previous_minute(); }},
@@ -263,9 +265,9 @@ void frame_view::handle_jump_hotkeys() {
        {ImGuiKey_PageDown, [this] { jump_to_next_hour(); }},
    };
 
-   for (auto &kv : keymap) {
-      if (ImGui::IsKeyPressed(kv.first)) {
-         kv.second();
+   for (const auto &[key, func] : keymap) {
+      if (ImGui::IsKeyPressed(key)) {
+         func();
          break;
       }
    }
@@ -319,7 +321,7 @@ void frame_view::draw() {
       return;
    }
 
-   if (!texture_handle_) {
+   if (texture_handle_ == 0u) {
       ImGui::Text("Error loading image...");
       return;
    }

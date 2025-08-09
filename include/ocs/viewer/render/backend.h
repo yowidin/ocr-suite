@@ -16,7 +16,7 @@ class frontend;
 
 class backend {
 public:
-   backend(frontend &v)
+   explicit backend(frontend &v)
       : frontend_{&v} {}
 
    virtual ~backend() = default;

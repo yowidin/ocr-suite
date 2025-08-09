@@ -9,7 +9,7 @@
 namespace {
 
 void update_v1(sqlite_burrito::versioned_database &db, std::error_code &ec) {
-   auto sql = R"sql(
+   const auto sql = R"sql(
 BEGIN TRANSACTION;
 
 CREATE INDEX frame_numbers_idx ON ocr_entries(frame_num);

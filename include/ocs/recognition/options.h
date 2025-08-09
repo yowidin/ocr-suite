@@ -8,9 +8,15 @@
 #include <optional>
 #include <string>
 
+#include <lyra/lyra.hpp>
+
+#include <ocs/recognition/provider/tesseract.h>
+
 namespace ocs::recognition {
 
 struct options {
+   explicit options(lyra::cli &cli);
+
    static std::optional<options> parse(int argc, const char **argv);
 
    //! Number of OCR threads
@@ -22,11 +28,8 @@ struct options {
    //! Database file name
    std::string database_file{};
 
-   //! OCR languages
-   std::string language{};
-
-   //! Path the Tesseract data directory
-   std::string tess_data_path{};
+   //! Tesseract options
+   provider::tesseract::config tesseract;
 
    //! Video frame filter
    std::uint16_t frame_filter{};

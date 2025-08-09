@@ -12,7 +12,7 @@
 #include <imgui.h>
 
 struct SDL_Window;
-typedef union SDL_Event SDL_Event;
+using SDL_Event = union SDL_Event;
 
 IMGUI_API bool        ImGui_ImplSdlGLES3_Init();
 IMGUI_API void        ImGui_ImplSdlGLES3_Shutdown();
