@@ -141,6 +141,9 @@ jobs:
       ##############################
       # Upload conan packages
       ##############################
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
       - name: Conan setup
         uses: "./.github/actions/conan-setup"
         with:
