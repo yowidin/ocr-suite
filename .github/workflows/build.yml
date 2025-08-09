@@ -14,196 +14,162 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ################################################################################
-  # Build macOS
-  ################################################################################
-  build_macos:
-    runs-on: macos-13
+  build:
+    runs-on: ${{ matrix.os }}
+
+    # Force bash on all operating systems, otherwise Windows builds will fail because they would be using PowerShell
+    # and couldn't correctly handle the environment variables setup.
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-13, ubuntu-22.04, windows-2022 ]
+        build_type: [ Release ]
+        arch: [ x64, armv8 ]
+        exclude:
+          - os: ubuntu-22.04
+            arch: armv8
+          - os: windows-2022
+            arch: armv8
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        # Note: we cannot use `if` here because the `if` conditions are evaluated before a matrix is applied.
+        - name: Configure matrix-dependant environment variables
+          run: |
+            echo "ARCH_ARG=${{ matrix.arch == 'armv8' && 'armv8' || matrix.arch == 'x64' && 'x86_64' }}" >> $GITHUB_ENV
+            echo "OS_ARG=${{ matrix.os == 'macos-13' && '-s:h os.version=11.0' || '' }}" >> $GITHUB_ENV
+            echo "OS_NAME=${{ matrix.os == 'macos-13' && 'macos' || matrix.os == 'ubuntu-22.04' && 'ubuntu' || 'windows' }}" >> $GITHUB_ENV
+            echo "BUILD_TYPE_NAME=${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}" >> $GITHUB_ENV
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+        - name: Collect common args
+          run: |
+            echo "COMMON_ARGS=-b missing -s:a compiler.cppstd=17 ${{ env.OS_ARG }} -s:h arch=${{ env.ARCH_ARG }} "\
+                 "-s build_type=${{ matrix.build_type }}" >> $GITHUB_ENV 
+            echo "BUILD_DIR_NAME=${{ env.ARCH_ARG }}-${{ env.BUILD_TYPE_NAME }}" >> $GITHUB_ENV
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install conan==2.19.0
+        - name: Checkout the code
+          uses: actions/checkout@v4
 
-      - name: Configure conan
-        run: |
-          conan --version
-          conan profile detect
-          conan config install ./profiles
-          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
-          conan remote login conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+        - name: Conan setup
+          uses: "./.github/actions/conan-setup"
+          with:
+            conan-version: 2.19.0
+            remote-url: "${{ secrets.CONAN_UPLOAD }}"
+            remote-username: "${{ secrets.CONAN_USER_NAME }}"
+            remote-password: "${{ secrets.CONAN_PASSWORD }}"
 
-      - name: Build x86
-        run:  |
-          conan build -b missing -s:b compiler.cppstd=17 -s:h compiler.cppstd=17 -s build_type=Release \
-            -c:h tools.cmake.cmake_layout:build_folder_vars='["settings.arch"]' \
-            -s os.version=11.0 -s:h arch=x86_64 .
-          cd build/x86_64/Release
-          cpack -G ZIP
+        - name: Install Ubuntu dependencies
+          if: startsWith(matrix.os, 'ubuntu')
+          run:  |
+            sudo apt-get update
+            sudo apt-get install -y ninja-build pkg-config wget libva-dev libvdpau-dev libx11-xcb-dev \
+                 libfontenc-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev libxcursor-dev \
+                 libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev libxkbfile-dev \
+                 libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev \
+                 libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev libxcb-render0-dev \
+                 libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
+                 libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev \
+                 libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-util0-dev libxcb-cursor-dev \
+                 mesa-common-dev libegl-dev 
 
-      - name: Build ARM
-        run:  |
-          conan build -b missing -s:b compiler.cppstd=17 -s:h compiler.cppstd=17 -s build_type=Release \
-            -c:h tools.cmake.cmake_layout:build_folder_vars='["settings.arch"]' \
-            -s os.version=11.0 -s:h arch=armv8 .
-          cd build/armv8/Release
-          cpack -G ZIP
+        - name: Build
+          run: |
+            conan build ${{ env.COMMON_ARGS }} .
+            cd build/${{ env.BUILD_DIR_NAME }}
+            cpack -C ${{ matrix.build_type }} -G ZIP
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ocr-suite-macos-x86
-          path: ${{ github.workspace }}/build/x86_64/Release/ocr-suite-*.zip
-          if-no-files-found: error
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: ocr-suite-${{ env.OS_NAME }}-${{ env.BUILD_DIR_NAME }}
+            path: build/${{ env.BUILD_DIR_NAME }}/*.zip
+            if-no-files-found: error
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ocr-suite-macos-armv8
-          path: ${{ github.workspace }}/build/armv8/Release/ocr-suite-*.zip
-          if-no-files-found: error
+        ##############################
+        # Conan cache management
+        ##############################
+        - name: Export conan packages to cache
+          if: startsWith(github.ref, 'refs/tags/')
+          run: |
+            mkdir -p conan-cache-export
+            conan cache save "*/*#*:*" --file=conan-cache-export/conan-cache-${{ strategy.job-index }}.tgz
 
-      - name: Upload conan packages
-        run: |
-          conan upload -r=conan-burrito '*:*' -c
-
-  ################################################################################
-  # Build Ubuntu
-  ################################################################################
-  build_ubuntu:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install conan==2.19.0
-
-      - name: Configure conan
-        run: |
-          conan --version
-          conan profile detect
-          conan config install ./profiles
-          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
-          conan remote login conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
-
-      - name: Install dependencies
-        run:  |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build pkg-config wget libva-dev libvdpau-dev libx11-xcb-dev \
-               libfontenc-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev libxcursor-dev \
-               libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev libxkbfile-dev \
-               libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev \
-               libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev libxcb-render0-dev \
-               libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
-               libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev \
-               libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-util0-dev libxcb-cursor-dev \
-               mesa-common-dev libegl-dev 
-
-      - name: Build
-        run:  |
-          conan build -b missing -s:b compiler.cppstd=17 -s:h compiler.cppstd=17 -s build_type=Release .
-          cd build/Release
-          cpack -G ZIP
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ocr-suite-ubuntu
-          path: ${{ github.workspace }}/build/Release/ocr-suite-*.zip
-          if-no-files-found: error
-
-      - name: Upload conan packages
-        run: |
-          conan upload -r=conan-burrito '*:*' -c
-
-  ###############################################################################
-  # Build Windows
-  ################################################################################
-  build_windows:
-    runs-on: windows-2022
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install conan==2.19.0
-
-      - name: Configure conan
-        run: |
-          conan --version
-          conan profile detect
-          conan config install ./profiles
-          conan remote add conan-burrito "${{ secrets.CONAN_UPLOAD }}"
-          conan remote login conan-burrito "${{ secrets.CONAN_USER_NAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
-
-      - name: Build
-        run:  |
-          conan build -b missing -s:b compiler.cppstd=17 -s:h compiler.cppstd=17 -s build_type=Release  .
-          cd build/Release
-          cpack -G ZIP
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ocr-suite-windows
-          path: ${{ github.workspace }}/build/ocr-suite-*.zip
-          if-no-files-found: error
-
-      - name: Upload conan packages
-        run: |
-          conan upload -r=conan-burrito -c --all *
+        - name: Upload conan cache as artifacts
+          if: startsWith(github.ref, 'refs/tags/')
+          uses: actions/upload-artifact@v4
+          with:
+            name: conan-cache-${{ strategy.job-index }}
+            path: conan-cache-export/conan-cache-${{ strategy.job-index }}.tgz
+            if-no-files-found: error
+            compression-level: 0  # No point doing a second compression round
+            retention-days: 1  # Conan cache is very temporary - no need in storing it for 90 days
 
   ################################################################################
   # Deploy
   ################################################################################
   deploy:
     if: startsWith(github.ref, 'refs/tags/')
-    needs:
-      - build_macos
-      - build_ubuntu
-      - build_windows
     runs-on: ubuntu-latest
+    needs: build
     steps:
+      ##############################
+      # Attach release binaries
+      ##############################
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifact
+          path: release-binaries
+          pattern: ocr-suite-*
+          merge-multiple: true
 
-      - name: List artifacts
+      - name: List release binaries
         run: ls -R
-        working-directory: artifact
+        working-directory: release-binaries
 
-      - name: Release
+      - name: Attach binaries to a release
         uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}HUB_TOKEN }}
         with:
           files: |
-            artifact/**/*
+            release-binaries/ocr-suite-*
           fail_on_unmatched_files: true
+
+      ##############################
+      # Upload conan packages
+      ##############################
+      - name: Conan setup
+        uses: "./.github/actions/conan-setup"
+        with:
+          conan-version: 2.19.0
+          remote-url: "${{ secrets.CONAN_UPLOAD }}"
+          remote-username: "${{ secrets.CONAN_USER_NAME }}"
+          remote-password: "${{ secrets.CONAN_PASSWORD }}"
+
+      - name: Download conan cache files
+        uses: actions/download-artifact@v4
+        with:
+          path: conan-cache-import
+          pattern: conan-cache-*
+          merge-multiple: true
+
+      - name: Restore conan cache
+        working-directory: conan-cache-import
+        run: |
+          for cache_file in *; do
+            conan cache restore "$cache_file"
+          done
+
+      - name: Upload all packages from all jobs
+        run: conan upload --confirm --remote conan-burrito "*/*#*:*"
+
+  # Pointless job that allows using a single check for CI dependencies
+  build_post:
+    name: Build Post
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: "true"

@@ -1,0 +1,59 @@
+name: conan-setup
+description: "Perform basic conan setup"
+inputs:
+  shell:
+    description: "Shell to use in run steps"
+    required: false
+    default: bash
+
+  conan-version:
+    description: "Conan version to be installed"
+    required: true
+
+  conan-profile-dir:
+    description: "Directory to write the temporary conan profile into"
+    required: false
+    default: ".github/.conan/profiles"
+
+  remote-url:
+    description: "Conan remote URL"
+    required: true
+
+  remote-username:
+    description: "Conan remote user name"
+    required: true
+
+  remote-password:
+    description: "Conan remote password"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Install python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      shell:  ${{inputs.shell}}
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install conan==${{ inputs.conan-version }}
+
+    - name: Configure conan
+      shell:  ${{inputs.shell}}
+      run: |
+        conan --version
+        conan profile detect
+        conan remote add conan-burrito "${{ inputs.remote-url }}"
+        conan remote login conan-burrito "${{ inputs.remote-username }}" -p "${{ inputs.remote-password }}"
+
+    - name: Increase conan HTTP timeouts
+      shell:  ${{inputs.shell}}
+      run: |
+        mkdir -p ${{ inputs.conan-profile-dir }}
+        echo 'core.net.http:timeout=300' > ${{ inputs.conan-profile-dir }}/global.conf
+        echo 'tools.cmake.cmake_layout:build_folder_vars=["settings.arch","settings.build_type"]' >> ${{ inputs.conan-profile-dir }}/global.conf
+        conan config install ${{ inputs.conan-profile-dir }}
