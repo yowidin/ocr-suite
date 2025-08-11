@@ -1,0 +1,21 @@
+[project]
+authors = [
+    {name = "Dennis Sitelew", email = "yowidin@gmail.com"},
+]
+requires-python = ">=3.10"
+dependencies = [
+    "watchdog~=6.0.0",
+]
+name = "ocsw"
+version = "0.0.2"
+description = "OCR suite watcher"
+
+[project.scripts]
+ocs-watcher = "ocsw.__main__:main"
+
+[tool.pdm.build]
+includes = ["ocsw"]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

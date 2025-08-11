@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-
 from ocsw.options import Options
 from ocsw.runner import Runner
 
