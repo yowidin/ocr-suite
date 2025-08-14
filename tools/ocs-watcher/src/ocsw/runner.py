@@ -91,7 +91,9 @@ class Runner:
             interrupt_signal = signal.SIGINT
 
         args = self._prepare_call_arguments(path)
-        proc = subprocess.Popen(args, creationflags=flags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = None
+        if not self._dry_run:
+            proc = subprocess.Popen(args, creationflags=flags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         last_output = ''
 
@@ -122,12 +124,13 @@ class Runner:
 
         try:
             print(f'Handling {path}: {" ".join(args)}')
-            if not self._dry_run:
+            if proc is not None:
                 run_for_output()
         except KeyboardInterrupt:
             print(f'\nInterrupting OCR for {path}')
-            proc.send_signal(interrupt_signal)
-            run_for_output()
+            if proc is not None:
+                proc.send_signal(interrupt_signal)
+                run_for_output()
             return False
 
         return True
