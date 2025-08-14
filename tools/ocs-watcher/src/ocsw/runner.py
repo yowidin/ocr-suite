@@ -1,60 +1,54 @@
 import subprocess
 import sys
-import os
+import signal
 
 from pathlib import Path
 from time import sleep, monotonic
 
-from ocsw.options import Options
+from ocsw.config import Config
 from ocsw.watcher import Watcher
+from ocsw.file_filter import collect_by_extension
 
 
 class Runner:
     SLEEP_DURATION = 5
     OUTPUT_POLLING_INTERVAL = 5
 
-    def __init__(self, options: Options):
-        self._options = options
+    def __init__(self, config: Config, dry_run: bool):
+        self._config = config
         self._should_run = False
         self._last_check_time = 0.0
-        self._check_frequency_seconds = self._options.check_frequency * 60
+        self._dry_run = dry_run
+        self._checking_frequency_seconds = self._config.checking_frequency * 60
 
     def _on_file_change(self, path):
         print('File change:', path)
         self._should_run = True
 
     def run(self):
-
-        with Watcher(self._options, self._on_file_change):
+        with Watcher(self._config, self._on_file_change):
             try:
-                can_continue = self._ocr_all_files()
+                can_continue = self._process_all_files()
                 while can_continue:
                     sleep(Runner.SLEEP_DURATION)
 
                     if self._should_run:
-                        can_continue = self._ocr_all_files()
+                        can_continue = self._process_all_files()
                         continue
 
                     current_time = monotonic()
-                    if current_time - self._last_check_time > self._check_frequency_seconds:
-                        can_continue = self._ocr_all_files()
+                    if current_time - self._last_check_time > self._checking_frequency_seconds:
+                        can_continue = self._process_all_files()
                         continue
 
             except KeyboardInterrupt:
                 pass
 
-    def _get_video_list(self):
-        video_dir = self._options.video_dir
-        extension = self._options.file_extension
-
-        _, _, filenames = next(os.walk(video_dir))
-        return [os.path.join(video_dir, x) for x in filenames if x.endswith(extension)]
-
-    def _ocr_all_files(self) -> bool:
-        files = self._get_video_list()
+    def _process_all_files(self) -> bool:
+        files = collect_by_extension(self._config.watch_directory, self._config.file_extensions)
         can_continue = True
         for file in files:
-            can_continue = self._ocr_file(file)
+            can_continue = self._process_one_file(file)
             if not can_continue:
                 break
 
@@ -63,31 +57,40 @@ class Runner:
 
         return can_continue
 
+    def _prepare_call_arguments(self, input_file: Path) -> list[str]:
+        from ocsw.config import INPUT_FILE_PLACEHOLDER, INPUT_FILE_STEM_PLACEHOLDER
+
+        stem_path = self._get_stem_path(input_file)
+
+        args = [str(self._config.target_app)]
+        for arg in self._config.call_arguments:
+            if INPUT_FILE_PLACEHOLDER in arg:
+                args.append(arg.replace(INPUT_FILE_PLACEHOLDER, str(input_file)))
+                continue
+
+            if INPUT_FILE_STEM_PLACEHOLDER in arg:
+                args.append(arg.replace(INPUT_FILE_STEM_PLACEHOLDER, str(stem_path)))
+                continue
+
+            args.append(arg)
+
+        return args
+
     @staticmethod
-    def _get_database_path(video_path):
-        path = Path(video_path)
+    def _get_stem_path(file_path: Path) -> Path:
+        directory = file_path.parent
+        file_name = file_path.stem
+        return directory / file_name
 
-        directory = path.parent
-        file_name = os.path.splitext(path.name)[0]
-
-        return os.path.join(directory, file_name + '.db')
-
-    def _ocr_file(self, path) -> bool:
+    def _process_one_file(self, path: Path) -> bool:
         flags = 0
         if sys.platform == 'win32':
             flags = subprocess.CREATE_NEW_PROCESS_GROUP
-            signal = subprocess.signal.CTRL_C_EVENT
+            interrupt_signal = signal.CTRL_C_EVENT
         else:
-            signal = subprocess.signal.SIGINT
+            interrupt_signal = signal.SIGINT
 
-        args = [
-            self._options.ocr_suite,
-            '-p', str(self._options.num_ocr_threads),
-            '-l', self._options.ocr_lang,
-            '-t', self._options.tess_data_path,
-            '-i', path,
-            '-o', self._get_database_path(path)
-        ]
+        args = self._prepare_call_arguments(path)
         proc = subprocess.Popen(args, creationflags=flags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         last_output = ''
@@ -104,8 +107,7 @@ class Runner:
             if proc.returncode != 0:
                 error = errs.decode("utf-8").strip()
                 if len(error) != 0:
-                    print(f'OCR errors for {path}:\n{error}')
-                return False
+                    print(f'Runner errors for {path}:\n{error}')
 
         def run_for_output():
             nonlocal last_output
@@ -119,12 +121,12 @@ class Runner:
                     last_output = text
 
         try:
-            print(f'Running OCR for {path}')
-            run_for_output()
-
+            print(f'Handling {path}: {" ".join(args)}')
+            if not self._dry_run:
+                run_for_output()
         except KeyboardInterrupt:
             print(f'\nInterrupting OCR for {path}')
-            proc.send_signal(signal)
+            proc.send_signal(interrupt_signal)
             run_for_output()
             return False
 
