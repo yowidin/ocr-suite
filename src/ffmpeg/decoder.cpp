@@ -206,7 +206,7 @@ void decoder::convert_to_rgb_and_copy_data(const AVFrame &src, std::vector<std::
       throw std::runtime_error("Could not allocate destination image");
    }
 
-   auto sws_context = ffmpeg_->sws_context;
+   auto &sws_context = ffmpeg_->sws_context;
 
    // Convert the image from its native format to RGB
    sws_context = sws_getCachedContext(sws_context, src.width, src.height, av_format(src.format), rgb.width, rgb.height,
