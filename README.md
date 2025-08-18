@@ -3,12 +3,14 @@
 A tool for recognizing text in a video file and storing it in a SQLite3 database.
 
 ## Installation
+
 - Grab a binary from the releases page, or build it yourself.
 - Download the [Tesseract OCR data](https://github.com/tesseract-ocr/tessdata/releases/)
 
 ## Building
 
 ### Requirements
+
 - [CMake](https://cmake.org/download/)
 - A modern enough C++ compiler (with C++17 support)
 - [conan](https://docs.conan.io/en/latest/installation.html)
@@ -23,8 +25,16 @@ mkdir -p build/release && cd build/release
 ```
 
 3. Install the dependencies
+
 ```shell
 conan install ../.. --build=missing -s build_type=Release
+```
+
+Note that building on Apple platforms with VisionKit support requires a generator different from "Unix Makefiles".
+You can select a generator by passing `-c tools.cmake.cmaketoolchain:generator=generator` argument, for example:
+
+```shell
+conan install ../.. --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
 ```
 
 4. Build the project
@@ -55,19 +65,17 @@ too lazy to investigate this any further so at the moment I'm just uploading ffm
 
 
 ## Automating recognition
+
 You can use the `ocs-watcher` helper script to run the OCR Suite on all video files in a directory. 
 It will automatically detect when a new file is added and run the OCR Suite on it, as well as run
 OCR Suite periodically on all files in the directory, thus keeping the database up to date for a video file,
-currently being recorded.
+currently being recorded:
 
-### Installation
-Use `pip` to install the script:
+Fill out your configuration file and run the watcher (see tools/ocs-watcher/tests/dummy-config.toml for example):
+
 ```shell
-pip install ./tools/ocs-watcher
+uv run ocs-watcher -c config.toml
 ```
 
-### Usage
-You will need to pass the video files directory as well as the path to the `ocr-suite` binary to the script:
-```shell
-ocs-watcher -o ./bin/dir/ocr-suite -i ./movies/dir/ -t ./tesserarct/data/dir/ -f 10
-```
+NOTE: On MacOS when using the VisionKit OCR provider, there is no point in spawning multiple threads, the VisionKit
+processes all the requests from all the threads sequentially anyway.

@@ -2,11 +2,11 @@
 
 #include <ocs/common/database.h>
 
+#include <ocs/common/video.h>
 #include <ocs/recognition/bmp.h>
 #include <ocs/recognition/ocr.h>
 #include <ocs/recognition/options.h>
 #include <ocs/recognition/speed_meter.h>
-#include <ocs/common/video.h>
 
 #include <cstdlib>
 #include <exception>
@@ -51,7 +51,7 @@ int main(int argc, const char **argv) {
       return EXIT_FAILURE;
    }
 
-   const auto options = pres.value();
+   const auto &options = pres.value();
 
    database db{options.database_file};
    auto queue = std::make_shared<video::queue_t>(options.ocr_threads * 2);
