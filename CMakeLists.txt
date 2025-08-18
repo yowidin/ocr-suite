@@ -82,11 +82,21 @@ target_include_directories(ocr_common
 set_target_properties(ocr_common PROPERTIES OUTPUT_NAME ocr-common)
 
 ################################################################################
+### OCR library
+add_library(ocr_recognition_common STATIC
+    src/recognition/provider/tesseract.cpp
+)
+
+target_link_libraries(ocr_recognition_common
+    PUBLIC ocr_common
+    PUBLIC Tesseract::libtesseract bfg::lyra Boost::filesystem spdlog::spdlog
+)
+
+################################################################################
 ### Main Tool
 add_executable(ocr_suite
     src/recognition/bmp.cpp
     src/recognition/ocr.cpp
-    src/recognition/provider/tesseract.cpp
 
     src/recognition/speed_meter.cpp
     src/recognition/options.cpp
@@ -95,7 +105,7 @@ add_executable(ocr_suite
 )
 
 target_link_libraries(ocr_suite
-    PRIVATE ocr_common Tesseract::libtesseract bfg::lyra Boost::filesystem
+    PRIVATE ocr_recognition_common
 )
 
 set_target_properties(ocr_suite PROPERTIES OUTPUT_NAME ocr-suite)

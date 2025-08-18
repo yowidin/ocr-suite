@@ -1,14 +1,12 @@
 find_package(nlohmann_json REQUIRED)
 
 add_executable(ocr_cli
-    ${CMAKE_SOURCE_DIR}/src/recognition/provider/tesseract.cpp
-
     ocr-cli.cpp
 )
 
 target_link_libraries(ocr_cli
-    PRIVATE ocr_common
-    PRIVATE Boost::filesystem bfg::lyra Tesseract::libtesseract nlohmann_json::nlohmann_json
+    PRIVATE ocr_recognition_common
+    PRIVATE nlohmann_json::nlohmann_json
     PRIVATE stb::stb
 )
 
