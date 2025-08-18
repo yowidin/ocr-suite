@@ -21,7 +21,7 @@ class Recipe(ConanFile):
         'tesseract/5.5.0',
         'libpng/1.6.50',
         'spdlog/1.15.3',
-        'lyra/1.6.1',
+        'lyra/1.7.0',
         'sqlite-burrito/0.2.4@conan-burrito/stable',
         'indicators/2.3',
         'boost/1.88.0',
