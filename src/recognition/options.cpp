@@ -87,6 +87,12 @@ std::optional<options> options::parse(int argc, const char **argv) {
       return std::nullopt;
    }
 
+#if OCS_VISION_KIT_SUPPORT()
+   if (res.vision_kit.selected && !res.vision_kit.validate()) {
+      return std::nullopt;
+   }
+#endif // OCS_VISION_KIT_SUPPORT()
+
    if (!boost::filesystem::exists(res.video_file)) {
       std::cerr << "Video file does not exist: " << res.video_file << std::endl;
       return std::nullopt;

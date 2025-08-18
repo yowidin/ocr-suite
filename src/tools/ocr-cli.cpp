@@ -17,7 +17,14 @@
 #include <lyra/lyra.hpp>
 #include <nlohmann/json.hpp>
 
+#include <ocs/config.h>
 #include <ocs/recognition/provider/tesseract.h>
+
+#if OCS_VISION_KIT_SUPPORT()
+#include <ocs/recognition/provider/vision_kit.h>
+#endif // OCS_VISION_KIT_SUPPORT()
+
+namespace provider_ns = ocs::recognition::provider;
 
 namespace ocs::cli {
 
@@ -61,12 +68,22 @@ struct options {
          return std::nullopt;
       }
 
+#if OCS_VISION_KIT_SUPPORT()
+      if (result.vision_kit.selected && !result.vision_kit.validate()) {
+         return std::nullopt;
+      }
+#endif // OCS_VISION_KIT_SUPPORT()
+
       return result;
    }
 
    lyra::group global{};
    lyra::group subcommands{};
    provider_ns::tesseract::config tesseract{subcommands};
+
+#if OCS_VISION_KIT_SUPPORT()
+   provider_ns::vision_kit::config vision_kit{subcommands};
+#endif // OCS_VISION_KIT_SUPPORT()
 
    bool show_help{false};
    std::string image_file{};
@@ -156,10 +173,13 @@ int main(const int argc, const char **argv) {
    try {
       const auto frame = ocs::cli::load_frame(options.image_file);
 
-      ocs::recognition::provider::tesseract tesseract{options.tesseract};
       std::unique_ptr<provider_ns::provider> provider;
       if (options.tesseract.selected) {
          provider = std::make_unique<provider_ns::tesseract>(options.tesseract);
+#if OCS_VISION_KIT_SUPPORT()
+      } else if (options.vision_kit.selected) {
+         provider = std::make_unique<provider_ns::vision_kit>(options.vision_kit);
+#endif // OCS_VISION_KIT_SUPPORT()
       } else {
          spdlog::error("No OCR provider selected");
          return EXIT_FAILURE;

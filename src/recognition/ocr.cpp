@@ -2,9 +2,14 @@
 // Created by Dennis Sitelew on 21.12.22.
 //
 
+#include <ocs/config.h>
 #include <ocs/recognition/bmp.h>
 #include <ocs/recognition/ocr.h>
 #include <ocs/recognition/provider/tesseract.h>
+
+#if OCS_VISION_KIT_SUPPORT()
+#include <ocs/recognition/provider/vision_kit.h>
+#endif // OCS_VISION_KIT_SUPPORT()
 
 #include <functional>
 
@@ -33,10 +38,12 @@ std::string get_frame_path(const std::string &bitmap_dir, std::int64_t frame_num
 ocr::ocr(const options &opts, ocr_result_cb_t cb)
    : opts_{&opts}
    , cb_{std::move(cb)} {
-   // TODO: Provider selection
-   provider_ = std::make_unique<provider::tesseract>(opts_->tesseract);
    if (opts_->tesseract.selected) {
       provider_ = std::make_unique<provider::tesseract>(opts_->tesseract);
+#if OCS_VISION_KIT_SUPPORT()
+   } else if (opts_->vision_kit.selected) {
+      provider_ = std::make_unique<provider::vision_kit>(opts_->vision_kit);
+#endif // OCS_VISION_KIT_SUPPORT()
    } else {
       throw std::runtime_error("No OCR provider selected");
    }

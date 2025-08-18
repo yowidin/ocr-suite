@@ -28,11 +28,10 @@ jobs:
       matrix:
         os: [ macos-13, ubuntu-22.04, windows-2022 ]
         build_type: [ Release ]
-        arch: [ x64, armv8 ]
-        exclude:
-          - os: ubuntu-22.04
-            arch: armv8
-          - os: windows-2022
+        arch: [ x64 ]
+        include:
+          - os: macos-14
+            build_type: Release
             arch: armv8
 
     steps:
@@ -47,7 +46,7 @@ jobs:
         - name: Collect common args
           run: |
             echo "COMMON_ARGS=-b missing -s:a compiler.cppstd=17 ${{ env.OS_ARG }} -s:h arch=${{ env.ARCH_ARG }} "\
-                 "-s build_type=${{ matrix.build_type }}" >> $GITHUB_ENV 
+                 "-s build_type=${{ matrix.build_type }} -c tools.cmake.cmaketoolchain:generator=Ninja" >> $GITHUB_ENV 
             echo "BUILD_DIR_NAME=${{ env.ARCH_ARG }}-${{ env.BUILD_TYPE_NAME }}" >> $GITHUB_ENV
 
         - name: Checkout the code

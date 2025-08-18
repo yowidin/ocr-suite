@@ -25,6 +25,11 @@ message(STATUS "Windows: ${OCS_WINDOWS}")
 message(STATUS "Apple: ${OCS_APPLE}")
 message(STATUS "Unix: ${OCS_UNIX}")
 
+if(OCS_APPLE)
+    option(OCS_VISION_KIT_SUPPORT "Add support for macOS native OCR using the VisionKit" ON)
+    message(STATUS "VisionKit: ${OCS_VISION_KIT_SUPPORT}")
+endif()
+
 set(OCS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(OCS_GENERATED_INCLUDE_DIR "${OCS_GENERATED_DIR}/include")
 set(OCS_GENERATED_CONFIG_HEADER "${OCS_GENERATED_INCLUDE_DIR}/ocs/config.h")
@@ -44,8 +49,16 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(stb CONFIG REQUIRED)
-
 find_package(OpenGL REQUIRED)
+
+if(OCS_VISION_KIT_SUPPORT)
+    enable_language(Swift)
+
+    find_library(VISION_FRAMEWORK Vision)
+    find_library(CORE_IMAGE_FRAMEWORK CoreImage)
+    find_library(FOUNDATION_FRAMEWORK Foundation)
+    find_library(CORE_GRAPHICS_FRAMEWORK CoreGraphics)
+endif()
 
 ################################################################################
 ### FFMPEG helper
@@ -91,6 +104,24 @@ target_link_libraries(ocr_recognition_common
     PUBLIC ocr_common
     PUBLIC Tesseract::libtesseract bfg::lyra Boost::filesystem spdlog::spdlog
 )
+
+if(OCS_VISION_KIT_SUPPORT)
+    target_sources(ocr_recognition_common
+        PRIVATE src/recognition/provider/vision_kit.swift
+        PRIVATE src/recognition/provider/vision_kit.cpp
+    )
+
+    set_target_properties(ocr_recognition_common PROPERTIES
+        Swift_LANGUAGE_VERSION 4
+    )
+
+    target_link_libraries(ocr_recognition_common
+        PUBLIC ${VISION_FRAMEWORK}
+        PUBLIC ${CORE_IMAGE_FRAMEWORK}
+        PUBLIC ${FOUNDATION_FRAMEWORK}
+        PUBLIC ${CORE_GRAPHICS_FRAMEWORK}
+    )
+endif()
 
 ################################################################################
 ### Main Tool

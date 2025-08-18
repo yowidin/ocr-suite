@@ -10,7 +10,12 @@
 
 #include <lyra/lyra.hpp>
 
+#include <ocs/config.h>
 #include <ocs/recognition/provider/tesseract.h>
+
+#if OCS_VISION_KIT_SUPPORT()
+#include <ocs/recognition/provider/vision_kit.h>
+#endif // OCS_VISION_KIT_SUPPORT()
 
 namespace ocs::recognition {
 
@@ -32,8 +37,11 @@ struct options {
    std::string database_file{};
 
    //! Tesseract options
-   provider::tesseract::config tesseract;
    provider::tesseract::config tesseract{subcommands};
+
+#if OCS_VISION_KIT_SUPPORT()
+   provider::vision_kit::config vision_kit{subcommands};
+#endif // OCS_VISION_KIT_SUPPORT()
 
    //! Video frame filter
    std::uint16_t frame_filter{};
