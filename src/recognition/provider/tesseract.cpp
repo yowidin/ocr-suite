@@ -29,16 +29,19 @@ private:
 /*******************************************************************************
  * Tesseract provider config
  ******************************************************************************/
-provider::tesseract::config::config(lyra::cli &cli) {
-   cli.add_argument(lyra::opt(data_path, "tess_data_path")
-                        .name("-t")
-                        .name("--tess-data-path")
-                        .help("Path to the Tesseract data directory. You can download a copy here: "
-                              "https://github.com/tesseract-ocr/tessdata/releases/"));
-   cli.add_argument(lyra::opt(language, "language")
-                        .name("-l")
-                        .name("--language")
-                        .help("OCR language, e.g. 'eng+rus+deu', or just 'eng'"));
+provider::tesseract::config::config(lyra::group &cli) {
+   cli.add_argument(lyra::command("tess", [&](const lyra::group &f) { selected = true; })
+                        .help("Recognize using the Tesseract OCR library")
+                        .add_argument(lyra::opt(data_path, "data_path")
+                                          .name("-t")
+                                          .name("--tess-data-path")
+                                          .required()
+                                          .help("Path to the Tesseract data directory. You can download a copy here: "
+                                                "https://github.com/tesseract-ocr/tessdata/releases/"))
+                        .add_argument(lyra::opt(language, "language")
+                                          .name("-l")
+                                          .name("--language")
+                                          .help("OCR language, e.g. 'eng+rus+deu', or just 'eng'")));
 }
 
 bool provider::tesseract::config::validate() const {

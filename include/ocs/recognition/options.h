@@ -19,6 +19,9 @@ struct options {
 
    static std::optional<options> parse(int argc, const char **argv);
 
+   lyra::group global{};
+   lyra::group subcommands{};
+
    //! Number of OCR threads
    std::uint16_t ocr_threads{};
 
@@ -30,6 +33,7 @@ struct options {
 
    //! Tesseract options
    provider::tesseract::config tesseract;
+   provider::tesseract::config tesseract{subcommands};
 
    //! Video frame filter
    std::uint16_t frame_filter{};

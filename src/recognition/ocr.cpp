@@ -35,6 +35,11 @@ ocr::ocr(const options &opts, ocr_result_cb_t cb)
    , cb_{std::move(cb)} {
    // TODO: Provider selection
    provider_ = std::make_unique<provider::tesseract>(opts_->tesseract);
+   if (opts_->tesseract.selected) {
+      provider_ = std::make_unique<provider::tesseract>(opts_->tesseract);
+   } else {
+      throw std::runtime_error("No OCR provider selected");
+   }
 
    bitmap_directory_ = get_bitmap_directory(opts_->database_file);
    if (opts_->save_bitmaps) {

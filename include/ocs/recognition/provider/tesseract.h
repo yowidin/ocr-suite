@@ -19,10 +19,12 @@ private:
 
 public:
    struct config {
-      explicit config(lyra::cli &cli);
+      explicit config(lyra::group &cli);
 
       std::string data_path{};
       std::string language{"eng+rus+deu"};
+
+      bool selected{false};
 
       [[nodiscard]] bool validate() const;
    };
