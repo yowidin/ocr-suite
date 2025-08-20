@@ -1,6 +1,7 @@
-watch_directory="../"
+watch_directory="src"
 file_extensions=[".py"]
 target_app="/bin/echo"
 call_arguments=["--test", "--path", "%file_path%", "--stem", "%file_stem_path%.db"]
 checking_frequency=5
 lock_name="test.lock"
+max_parallelism=2

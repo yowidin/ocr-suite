@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints, FilePath, Directo
 from annotated_types import MinLen, Interval
 
 import tomlkit
+import os
 
 # A file extension starts with '.', consists of words and digits and can be anywhere between 1 and 6 characters long
 type FileExtension = Annotated[str, StringConstraints(pattern=r'^\.(?:\w|\d){1,6}$')]
@@ -19,6 +20,10 @@ INPUT_FILE_STEM_PLACEHOLDER = "%file_stem_path%"
 MIN_CHECK_FREQUENCY = 5
 MAX_CHECK_FREQUENCY = 60 * 8
 DEFAULT_CHECK_FREQUENCY = 10
+
+MIN_PARALLELISM = 1
+MAX_PARALLELISM = os.cpu_count() * 4
+DEFAULT_PARALLELISM = 1
 
 DEFAULT_LOCK_NAME = 'ocsw.lock'
 
@@ -53,10 +58,20 @@ class Config(BaseModel):
     # Lock file name: doesn't allow running multiple instances of the same application
     lock_name: NonEmptyString | None = DEFAULT_LOCK_NAME
 
+    # Maximum parallelism: how many files can be processed simultaneously
+    # Setting this to a value greater than 1 will suppress the standard output for the files being processed.
+    # In that case only the errors will be printed.
+    max_parallelism: Annotated[int, Interval(ge=MIN_PARALLELISM,
+                                             le=MAX_PARALLELISM)] | None = DEFAULT_PARALLELISM
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         if self.checking_frequency is None:
             self.checking_frequency = DEFAULT_CHECK_FREQUENCY
+
+        if self.max_parallelism is None:
+            self.max_parallelism = DEFAULT_PARALLELISM
 
         if self.lock_name is None:
             self.lock_name = DEFAULT_LOCK_NAME
