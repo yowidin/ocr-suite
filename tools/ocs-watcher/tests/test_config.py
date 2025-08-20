@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile, mkstemp
 from pydantic import ValidationError
 
 from ocsw.config import Config, MIN_CHECK_FREQUENCY, MAX_CHECK_FREQUENCY, DEFAULT_CHECK_FREQUENCY
+from ocsw.config import Config, MIN_PARALLELISM, MAX_PARALLELISM, DEFAULT_PARALLELISM
 from ocsw.config import DEFAULT_LOCK_NAME
 
 import os
@@ -22,6 +23,7 @@ class ConfigPlaceholder:
         self.target_app = self._tmp_file
         self.call_arguments = ['-i', '%file_path%']
         self.checking_frequency = 20
+        self.max_parallelism = 1
         self.lock_name = 'test.lock'
 
     def cleanup(self):
@@ -35,6 +37,7 @@ class ConfigPlaceholder:
             'target_app': self.target_app,
             'call_arguments': self.call_arguments,
             'checking_frequency': self.checking_frequency,
+            'max_parallelism': self.max_parallelism,
             'lock_name': self.lock_name,
         }
 
@@ -118,6 +121,34 @@ def test_config_missing_checking_frequency_is_default_frequency(valid_config):
     valid_config.checking_frequency = None
     cfg = Config(**valid_config.as_dict())
     assert cfg.checking_frequency == DEFAULT_CHECK_FREQUENCY
+
+
+def test_config_max_parallelism_min_value_is_acceptable(valid_config):
+    valid_config.max_parallelism = MIN_PARALLELISM
+    _ = Config(**valid_config.as_dict())
+
+
+def test_config_max_parallelism_max_value_is_acceptable(valid_config):
+    valid_config.max_parallelism = MAX_PARALLELISM
+    _ = Config(**valid_config.as_dict())
+
+
+def test_config_max_parallelism_value_too_small(valid_config):
+    valid_config.max_parallelism = MIN_PARALLELISM - 1
+    with pytest.raises(ValidationError):
+        _ = Config(**valid_config.as_dict())
+
+
+def test_config_max_parallelism_value_too_big(valid_config):
+    valid_config.max_parallelism = MAX_PARALLELISM + 1
+    with pytest.raises(ValidationError):
+        _ = Config(**valid_config.as_dict())
+
+
+def test_config_missing_max_parallelism_is_default_value(valid_config):
+    valid_config.max_parallelism = None
+    cfg = Config(**valid_config.as_dict())
+    assert cfg.max_parallelism == DEFAULT_PARALLELISM
 
 
 def test_config_missing_lock_name_is_default_lock_name(valid_config):
