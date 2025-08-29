@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(ocr_suite VERSION 0.5.0 LANGUAGES CXX)
+project(ocr_suite VERSION 0.5.1 LANGUAGES CXX)
 
 ################################################################################
 ### Common C++ configuration

@@ -15,14 +15,31 @@ namespace {
 // ReSharper disable CppParameterMayBeConstPtrOrRef
 AVPixelFormat get_hw_format(AVCodecContext *ctx, const AVPixelFormat *pix_fmts) {
    const auto requested = static_cast<const AVPixelFormat *>(ctx->opaque);
+   const AVPixelFormat *first_valid = nullptr;
+   const char *first_valid_name = nullptr;
    for (const AVPixelFormat *p = pix_fmts; *p != AV_PIX_FMT_NONE; ++p) {
+      const auto name = av_get_pix_fmt_name(*p);
+      if (name) {
+         spdlog::info("Available pixel format: {}", name);
+      }
       if (*p == *requested) {
          return *p;
       }
+
+      if (!first_valid) {
+         first_valid = p;
+         first_valid_name = name;
+      }
    }
 
-   spdlog::error("Failed to get HW surface format");
-   return AV_PIX_FMT_NONE;
+   if (!first_valid) {
+      spdlog::error("Failed to get HW surface format, no valid alternatives found");
+      return AV_PIX_FMT_NONE;
+   }
+
+   const auto name = first_valid_name ? first_valid_name : "[unknown]";
+   spdlog::warn("Failed to get HW surface format using {} instead", name);
+   return *first_valid;
 }
 
 decoder::frame_filter picture_type_to_filter(AVPictureType type) {

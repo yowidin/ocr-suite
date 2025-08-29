@@ -8,9 +8,10 @@ dependencies = [
     "pydantic>=2.11.5",
     "tomlkit>=0.13.3",
     "psutil<8.0.0,>=7.0.0",
+    "rich==14.1.0"
 ]
 name = "ocsw"
-version = "0.0.2"
+version = "0.0.3"
 description = "OCR suite watcher"
 
 [project.scripts]
