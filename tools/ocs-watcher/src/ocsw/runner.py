@@ -1,5 +1,6 @@
 from time import sleep, monotonic
 
+from ocsw import console
 from ocsw.config import Config
 from ocsw.watcher import Watcher
 from ocsw.file_filter import collect_by_extension
@@ -10,7 +11,7 @@ class Runner:
     SLEEP_DURATION = 5
     OUTPUT_POLLING_INTERVAL = 5
 
-    def __init__(self, config: Config, dry_run: bool):
+    def __init__(self, config: Config):
         self._config = config
         self._should_run = False
         self._last_check_time = 0.0

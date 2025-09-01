@@ -15,12 +15,11 @@ def report_exception(e):
     sys.exit(-1)
 
 
-def get_config() -> Tuple[Config, bool]:
+def get_config() -> Config:
     default_config = Path('ocsw-config.toml').absolute()
 
     parser = ArgumentParser()
     parser.add_argument('--config', '-c', type=str, required=False, default=default_config, help="Configuration file")
-    parser.add_argument('--dry-run', '-d', action='store_true', help="Don't actually do anything")
 
     args = parser.parse_args()
     config_file = Path(args.config).absolute()
@@ -30,15 +29,15 @@ def get_config() -> Tuple[Config, bool]:
 
     config = Config.from_toml_file(config_file)
 
-    return config, args.dry_run
+    return config
 
 
 def main():
     try:
-        config, dry_run = get_config()
+        config = get_config()
 
         with SingleInstance(lock_name=config.lock_name):
-            runner = Runner(config, dry_run)
+            runner = Runner(config)
             runner.run()
 
     except ValidationError as e:
