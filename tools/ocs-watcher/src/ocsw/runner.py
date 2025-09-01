@@ -18,7 +18,7 @@ class Runner:
         self._executor = Executor(config=config)
 
     def _on_file_change(self, path):
-        print('File change:', path)
+        console.log(f'File change: {path}')
         self._should_run = True
 
     def run(self):

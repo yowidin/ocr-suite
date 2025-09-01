@@ -5,14 +5,13 @@ from pathlib import Path
 from ocsw.runner import Runner
 from ocsw.config import Config
 from ocsw.single_instance import SingleInstance
-
-from typing import Tuple
+from ocsw import console
 
 import sys
 
 
 def report_exception(e):
-    print(e)
+    console.log(e)
     sys.exit(-1)
 
 
