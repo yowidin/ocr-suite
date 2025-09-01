@@ -1,29 +1,25 @@
 from time import sleep, monotonic
 
+from ocsw import console
 from ocsw.config import Config
 from ocsw.watcher import Watcher
 from ocsw.file_filter import collect_by_extension
-from ocsw.executor.sequential import SequentialExecutor
-from ocsw.executor.parallel import ParallelExecutor
+from ocsw.executor import Executor
 
 
 class Runner:
     SLEEP_DURATION = 5
     OUTPUT_POLLING_INTERVAL = 5
 
-    def __init__(self, config: Config, dry_run: bool):
+    def __init__(self, config: Config):
         self._config = config
         self._should_run = False
         self._last_check_time = 0.0
         self._checking_frequency_seconds = self._config.checking_frequency * 60
-
-        if config.max_parallelism == 1:
-            self._executor = SequentialExecutor(config=config, dry_run=dry_run)
-        else:
-            self._executor = ParallelExecutor(config=config, dry_run=dry_run)
+        self._executor = Executor(config=config)
 
     def _on_file_change(self, path):
-        print('File change:', path)
+        console.log(f'File change: {path}')
         self._should_run = True
 
     def run(self):
